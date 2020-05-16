@@ -12,32 +12,53 @@ public class CaptureManager : MonoBehaviour
     [SerializeField]
     Text m_StatusText;
 
-    [SerializeField]
-    Text m_PathText;
-
     int m_CascadeInitialized = 1;
     bool m_IsCapturing = false;
 
     [SerializeField]
     RawImage m_DetectionScreenImage;
+
+    WebcamManager m_WebcamManager;
    
     CvPlugin m_CvPlugin;
 
     string m_CascadeFileString = "";
 
+    Texture2D m_ProcessedTexture;
+
     // Start is called before the first frame update
     void Start()
     {
-        WebCamTexture webcamTexture = new WebCamTexture();
-        m_DetectionScreenImage.texture = webcamTexture;
-        m_DetectionScreenImage.material.mainTexture = webcamTexture;
-        webcamTexture.Play();
+        m_WebcamManager = GetComponent<WebcamManager>();
+        InitializeCamera();
+       
 
 #if UNITY_ANDROID && !UNITY_EDITOR
         m_CvPlugin = GetComponent<CvPlugin>();
         m_StatusText.text = "Ver: " + m_CvPlugin.GetOpenCvVersion();
         StartCoroutine("GetXmlFile");
 #endif
+    }
+
+    void InitializeCamera()
+    {
+        string cameraName = m_WebcamManager.GetFrontCameraName();
+        if (!cameraName.Equals("default"))
+        {
+            WebCamTexture webcamTexture = new WebCamTexture(cameraName);
+            m_DetectionScreenImage.texture = webcamTexture;
+            m_DetectionScreenImage.material.mainTexture = webcamTexture;
+            webcamTexture.Play();
+        }
+        else
+        {
+            Debug.LogError("No front facing cameras found");
+        }
+    }
+
+    void ProcessImage()
+    {
+
     }
 
     private IEnumerator GetXmlFile()
@@ -57,11 +78,11 @@ public class CaptureManager : MonoBehaviour
                 m_CascadeFileString = www.downloadHandler.text;
                 Debug.Log("GreeterLog : " + m_CascadeFileString);
                 m_CascadeInitialized = m_CvPlugin.InitializeCascade(m_CascadeFileString);
-                m_StatusText.text = "Cascade : " + m_CascadeInitialized;
 
                 if(m_CascadeInitialized == 0)
                 {
                     m_IsCapturing = true;
+                    m_StatusText.text = "Standing by";
                 }
 
             }
