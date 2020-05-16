@@ -14,6 +14,7 @@ public class CaptureManager : MonoBehaviour
 
     int m_CascadeInitialized = 1;
     bool m_IsCapturing = false;
+    bool m_IsCapturingEditor = false;
 
     [SerializeField]
     RawImage m_DetectionScreenImage;
@@ -24,19 +25,24 @@ public class CaptureManager : MonoBehaviour
 
     string m_CascadeFileString = "";
 
+    WebCamTexture m_WebcamTexture;
+    Color32[] data;
+    Texture2D m_OriginalTexture;
     Texture2D m_ProcessedTexture;
 
     // Start is called before the first frame update
     void Start()
     {
-        m_WebcamManager = GetComponent<WebcamManager>();
-        InitializeCamera();
+     
+      
+       m_WebcamManager = GetComponent<WebcamManager>();
+       InitializeCamera();
        
 
 #if UNITY_ANDROID && !UNITY_EDITOR
-        m_CvPlugin = GetComponent<CvPlugin>();
-        m_StatusText.text = "Ver: " + m_CvPlugin.GetOpenCvVersion();
-        StartCoroutine("GetXmlFile");
+       m_CvPlugin = GetComponent<CvPlugin>();
+       m_StatusText.text = "Ver: " + m_CvPlugin.GetOpenCvVersion();
+       StartCoroutine("GetXmlFile");
 #endif
     }
 
@@ -45,10 +51,21 @@ public class CaptureManager : MonoBehaviour
         string cameraName = m_WebcamManager.GetFrontCameraName();
         if (!cameraName.Equals("default"))
         {
-            WebCamTexture webcamTexture = new WebCamTexture(cameraName);
-            m_DetectionScreenImage.texture = webcamTexture;
-            m_DetectionScreenImage.material.mainTexture = webcamTexture;
-            webcamTexture.Play();
+            m_WebcamTexture = new WebCamTexture(cameraName);
+            data = new Color32[m_WebcamTexture.width * m_WebcamTexture.height];
+            m_WebcamTexture.Play();
+
+#if UNITY_ANDROID && !UNITY_EDITOR
+            m_ProcessedTexture = new Texture2D(m_WebcamTexture.width, m_WebcamTexture.height);
+            m_DetectionScreenImage.material.mainTexture = m_ProcessedTexture;
+            m_DetectionScreenImage.texture = m_ProcessedTexture;
+#endif
+#if UNITY_EDITOR
+            m_OriginalTexture = new Texture2D(m_WebcamTexture.width, m_WebcamTexture.height);
+            m_DetectionScreenImage.material.mainTexture = m_OriginalTexture;
+            m_DetectionScreenImage.texture = m_OriginalTexture;
+            m_IsCapturingEditor = true;
+#endif
         }
         else
         {
@@ -56,9 +73,25 @@ public class CaptureManager : MonoBehaviour
         }
     }
 
+    private void Update()
+    {
+        if (m_IsCapturingEditor)
+        {
+            m_OriginalTexture.SetPixels(m_WebcamTexture.GetPixels());
+            m_OriginalTexture.Apply();
+        }
+        if (m_IsCapturing)
+        {
+            ProcessImage();
+        }
+    }   
+  
     void ProcessImage()
     {
-
+        Texture2D processed = new Texture2D(m_DetectionScreenImage.texture.width, m_DetectionScreenImage.texture.height);
+        m_CvPlugin.Detect((Texture2D)m_DetectionScreenImage.texture, ref processed, m_DetectionScreenImage.texture.width, m_DetectionScreenImage.texture.height);
+        m_DetectionScreenImage.texture = processed;
+        m_DetectionScreenImage.material.mainTexture = processed;
     }
 
     private IEnumerator GetXmlFile()
@@ -82,7 +115,7 @@ public class CaptureManager : MonoBehaviour
                 if(m_CascadeInitialized == 0)
                 {
                     m_IsCapturing = true;
-                    m_StatusText.text = "Standing by";
+                    m_StatusText.text = "Capture: " + m_IsCapturing;
                 }
 
             }
