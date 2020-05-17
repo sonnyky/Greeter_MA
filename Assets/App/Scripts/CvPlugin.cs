@@ -26,7 +26,7 @@ public class CvPlugin : MonoBehaviour
     private static extern IntPtr _StringTest(IntPtr instance, string input);
 
     [DllImport("FaceDetection", EntryPoint = "_Detect")]
-    private static extern IntPtr _Detect(IntPtr instance, ref Color32[] rawImage, int width, int height);
+    private static extern void _Detect(IntPtr instance, ref Color32[] rawImage, int width, int height);
 
 
     private void Awake()

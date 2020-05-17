@@ -64,7 +64,7 @@ public class CaptureManager : MonoBehaviour
         string cameraName = m_WebcamManager.GetFrontCameraName();
         if (!cameraName.Equals("default"))
         {
-            m_WebcamTexture = new WebCamTexture(cameraName);
+            m_WebcamTexture = new WebCamTexture(cameraName, 640, 480, 30);
             data = new Color32[m_WebcamTexture.width * m_WebcamTexture.height];
             m_WebcamTexture.Play();
 
@@ -73,6 +73,7 @@ public class CaptureManager : MonoBehaviour
             m_ProcessedTexture = new Texture2D(m_WebcamTexture.width, m_WebcamTexture.height);
             m_DetectionScreenImage.material.mainTexture = m_OriginalTexture;
             m_DetectionScreenImage.texture = m_OriginalTexture;
+            Debug.Log("[GreeterMALog] Webcam texture size : " + m_WebcamTexture.width + ", " + m_WebcamTexture.height);
 #endif
 #if UNITY_EDITOR
             m_OriginalTexture = new Texture2D(m_WebcamTexture.width, m_WebcamTexture.height);
@@ -125,13 +126,12 @@ public class CaptureManager : MonoBehaviour
             else
             {
                 m_CascadeFileString = www.downloadHandler.text;
-                Debug.Log("GreeterLog : " + m_CascadeFileString);
                 m_CascadeInitialized = m_CvPlugin.InitializeCascade(m_CascadeFileString);
-
-                if(m_CascadeInitialized == 0)
+               
+                if (m_CascadeInitialized == 0)
                 {
                     m_IsCapturing = true;
-                    m_StatusText.text = "Capture: " + m_IsCapturing;
+                    m_StatusText.text = "Capture : " + m_IsCapturing;
                 }
 
             }
