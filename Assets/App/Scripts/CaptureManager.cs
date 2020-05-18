@@ -6,25 +6,22 @@ using System.Runtime.InteropServices;
 using UnityEngine;
 using UnityEngine.UI;
 
-[RequireComponent(typeof(CvPlugin))]
 public class CaptureManager : MonoBehaviour
 {
+    enum CaptureState {
+        STANDBY,
+        CAPTURE
+    }
+
     [SerializeField]
     Text m_StatusText;
-
-    int m_CascadeInitialized = 1;
-    bool m_IsCapturing = false;
 
     [SerializeField]
     RawImage m_DetectionScreenImage;
 
     WebcamManager m_WebcamManager;
-   
-    CvPlugin m_CvPlugin;
 
-    string m_CascadeFileString = "";
-
-    Texture2D m_ProcessedTexture;
+    public System.Action OnCapture;
 
     // Start is called before the first frame update
     void Start()
@@ -34,9 +31,7 @@ public class CaptureManager : MonoBehaviour
        
 
 #if UNITY_ANDROID && !UNITY_EDITOR
-        m_CvPlugin = GetComponent<CvPlugin>();
-        m_StatusText.text = "Ver: " + m_CvPlugin.GetOpenCvVersion();
-        StartCoroutine("GetXmlFile");
+        StartCoroutine("GetApiKey");
 #endif
     }
 
@@ -56,14 +51,9 @@ public class CaptureManager : MonoBehaviour
         }
     }
 
-    void ProcessImage()
+    private IEnumerator GetApiKey()
     {
-
-    }
-
-    private IEnumerator GetXmlFile()
-    {
-        var path = Path.Combine(Application.streamingAssetsPath, "lbpcascade_frontalface.xml");
+        var path = Path.Combine(Application.streamingAssetsPath, "apikey.txt");
         using (var www = UnityEngine.Networking.UnityWebRequest.Get(path))
         {
             yield return www.SendWebRequest();
@@ -71,26 +61,16 @@ public class CaptureManager : MonoBehaviour
             if (www.isNetworkError || www.isHttpError)
             {
                 Debug.LogErrorFormat(this, "Unable to load file due to {0} - {1}", www.responseCode, www.error);
-                m_StatusText.text = "Loading XML status failed";
+                m_StatusText.text = "Loading API key failed";
             }
             else
             {
-                m_CascadeFileString = www.downloadHandler.text;
-                Debug.Log("GreeterLog : " + m_CascadeFileString);
-                m_CascadeInitialized = m_CvPlugin.InitializeCascade(m_CascadeFileString);
-
-                if(m_CascadeInitialized == 0)
-                {
-                    m_IsCapturing = true;
-                    m_StatusText.text = "Standing by";
-                }
-
+                m_StatusText.text = "API Key loaded";
             }
         }
     }
 
     private void OnApplicationQuit()
     {
-        m_IsCapturing = false;
     }
 }
