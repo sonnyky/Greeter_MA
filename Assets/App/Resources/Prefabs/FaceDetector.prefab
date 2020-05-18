@@ -158,6 +158,7 @@ GameObject:
   - component: {fileID: 4107139108503507842}
   - component: {fileID: 4107139108503507853}
   - component: {fileID: 4107139108503507855}
+  - component: {fileID: 84166077216053145}
   m_Layer: 5
   m_Name: FaceDetector
   m_TagString: Untagged
@@ -199,7 +200,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 476467631873e444d997db565d814ea0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_StatusText: {fileID: 4107139108615100708}
+  m_StatusManager: {fileID: 84166077216053145}
+  m_CaptureButton: {fileID: 5567453422183171431}
   m_DetectionScreenImage: {fileID: 4107139108423371500}
 --- !u!114 &4107139108503507855
 MonoBehaviour:
@@ -213,6 +215,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4d82cc61a0912584dbd857b49c0c7e2c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &84166077216053145
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4107139108503507843}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 14640be912732e9419ceac41a27c3efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_StatusText: {fileID: 4107139108615100708}
 --- !u!1 &4107139108615100762
 GameObject:
   m_ObjectHideFlags: 0

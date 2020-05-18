@@ -14,25 +14,29 @@ public class CaptureManager : MonoBehaviour
     }
 
     [SerializeField]
-    Text m_StatusText;
+    StatusManager m_StatusManager;
+
+    [SerializeField]
+    Button m_CaptureButton;
 
     [SerializeField]
     RawImage m_DetectionScreenImage;
 
     WebcamManager m_WebcamManager;
+    WebCamTexture m_WebcamTexture;
 
     public System.Action OnCapture;
+    public System.Action OnGroupSelection;
 
     // Start is called before the first frame update
     void Start()
     {
         m_WebcamManager = GetComponent<WebcamManager>();
         InitializeCamera();
-       
-
-#if UNITY_ANDROID && !UNITY_EDITOR
-        StartCoroutine("GetApiKey");
-#endif
+        m_CaptureButton.onClick.AddListener(() =>
+        {
+            Capture();
+        });
     }
 
     void InitializeCamera()
@@ -40,10 +44,10 @@ public class CaptureManager : MonoBehaviour
         string cameraName = m_WebcamManager.GetFrontCameraName();
         if (!cameraName.Equals("default"))
         {
-            WebCamTexture webcamTexture = new WebCamTexture(cameraName);
-            m_DetectionScreenImage.texture = webcamTexture;
-            m_DetectionScreenImage.material.mainTexture = webcamTexture;
-            webcamTexture.Play();
+            m_WebcamTexture = new WebCamTexture(cameraName);
+            m_DetectionScreenImage.texture = m_WebcamTexture;
+            m_DetectionScreenImage.material.mainTexture = m_WebcamTexture;
+            m_WebcamTexture.Play();
         }
         else
         {
@@ -51,26 +55,13 @@ public class CaptureManager : MonoBehaviour
         }
     }
 
-    private IEnumerator GetApiKey()
+    public void Capture()
     {
-        var path = Path.Combine(Application.streamingAssetsPath, "apikey.txt");
-        using (var www = UnityEngine.Networking.UnityWebRequest.Get(path))
-        {
-            yield return www.SendWebRequest();
-
-            if (www.isNetworkError || www.isHttpError)
-            {
-                Debug.LogErrorFormat(this, "Unable to load file due to {0} - {1}", www.responseCode, www.error);
-                m_StatusText.text = "Loading API key failed";
-            }
-            else
-            {
-                m_StatusText.text = "API Key loaded";
-            }
-        }
+        m_StatusManager.ShowStatus(Constants.CAPTURING);
     }
 
     private void OnApplicationQuit()
     {
+        m_WebcamTexture.Stop();
     }
 }

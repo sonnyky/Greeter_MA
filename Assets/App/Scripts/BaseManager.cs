@@ -5,38 +5,48 @@ using UnityEngine;
 
 public class BaseManager : MonoBehaviour
 {
+    GameObject m_MainCanvas;
+
+    [SerializeField]
+    GameObject m_AzureManager;
+
     [SerializeField]
     GameObject m_StandbyUi;
 
     [SerializeField]
     GameObject m_RegistrationUi;
 
-    GameObject m_MainCanvas;
-
-    enum AppState
+    public enum AppState
     {
         REGISTRATION,
-        STANDBY
+        STANDBY,
+        INITIALIZE
     }
 
-    AppState m_State = AppState.STANDBY;
+    AppState m_State = AppState.INITIALIZE;
 
     // Start is called before the first frame update
     void Start()
     {
-        m_MainCanvas = GameObject.FindGameObjectWithTag("Canvas");
-        if(m_MainCanvas == null)
-        {
-            Debug.LogError(Constants.CANVAS_NOT_FOUND);
-        }
-        else
-        {
-            InstantiateUi(m_State);
-        }
+        InstantiateUi(m_State);
+        InstantiateManagers();
+    }
+
+    void InstantiateManagers()
+    {
+        GameObject azureMgr = Instantiate(m_AzureManager);
+        azureMgr.name = "AzureManager";
+        azureMgr.transform.SetParent(transform);
     }
 
     void InstantiateUi(AppState state)
     {
+        m_MainCanvas = GameObject.FindGameObjectWithTag("Canvas");
+        if (m_MainCanvas == null)
+        {
+            Debug.LogError(Constants.CANVAS_NOT_FOUND);
+            return;
+        }
         switch (state)
         {
             case AppState.STANDBY:
@@ -55,9 +65,12 @@ public class BaseManager : MonoBehaviour
 
             default:
                 break;
-
         }
-       
+    }
+
+    public AppState GetState()
+    {
+        return m_State;
     }
 
 }
