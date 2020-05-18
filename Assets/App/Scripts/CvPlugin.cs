@@ -25,6 +25,9 @@ public class CvPlugin : MonoBehaviour
     [DllImport("FaceDetection", EntryPoint = "_StringTest")]
     private static extern IntPtr _StringTest(IntPtr instance, string input);
 
+    [DllImport("FaceDetection", EntryPoint = "_Detect")]
+    private static extern void _Detect(IntPtr instance, ref Color32[] rawImage, int width, int height);
+
 
     private void Awake()
     {
@@ -47,5 +50,10 @@ public class CvPlugin : MonoBehaviour
     public string StringTest(string input)
     {
         return Marshal.PtrToStringAnsi(_StringTest(instance, input));
+    }
+
+    public void Detect(ref Color32[] rawImage, int width, int height)
+    {
+        _Detect(instance, ref rawImage, width, height);
     }
 }
