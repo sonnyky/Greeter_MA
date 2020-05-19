@@ -43,9 +43,7 @@ public class AzureManager : Singleton
         }
         else
         {
-            // Subscribe to dropdown UI
-            // When capture button is pressed, start detection process
-            m_CaptureManager.OnCapture += Detection;
+          
 #if UNITY_ANDROID && !UNITY_EDITOR
             StartCoroutine("GetSettings");
 #endif
@@ -69,6 +67,7 @@ public class AzureManager : Singleton
             if (www.isNetworkError || www.isHttpError)
             {
                 Debug.LogErrorFormat(this, "Unable to load file due to {0} - {1}", www.responseCode, www.error);
+                m_StatusManager.ShowStatus(Constants.API_KEY_NOT_LOADED);
             }
             else
             {
@@ -80,12 +79,6 @@ public class AzureManager : Singleton
             }
         }
     }
-
-    void Detection()
-    {
-        m_FaceDetection.Detect();
-    }
-
     public string GetApiKey()
     {
         return m_ApiKey;

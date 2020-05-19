@@ -46,7 +46,8 @@ public static class RequestManager
 
     }
 
-    public static IEnumerator CreatePersonInGroup(string endpoint, string apiKey, string personGroupId, string name, string userData, System.Action<string> result)
+    public static IEnumerator CreatePersonInGroup(string endpoint, string apiKey, string personGroupId, string name, string userData, 
+        System.Action<bool> result , System.Action<PersonCreateSuccess.PersonCreateSuccessResponse> success)
     {
         string request = endpoint + "/persongroups/" + personGroupId +"/persons";
 
@@ -70,18 +71,20 @@ public static class RequestManager
         if (www.isNetworkError)
         {
             Debug.Log(" Error: " + www.error);
-            result(www.error);
+            result(false);
         }
         else
         {
             if (!string.IsNullOrEmpty(www.error))
             {
                 Debug.Log(www.error);
-                result(www.error);
+                result(false);
             }
             else
             {
-                result(www.downloadHandler.text);
+                PersonCreateSuccess.PersonCreateSuccessResponse successValue = JsonUtility.FromJson<PersonCreateSuccess.PersonCreateSuccessResponse>(www.downloadHandler.text);
+                result(true);
+                success(successValue);
             }
         }
 
@@ -192,7 +195,7 @@ public static class RequestManager
                             temp.AddRange(arrayOfPersons);
                             personList(temp);
                         }
-                        else { result(false); personList(temp); }
+                        else { result(true); personList(temp); }
                     }
                 }
             }
@@ -272,7 +275,35 @@ public static class RequestManager
 
     }
 
-    public static IEnumerator AddFaceToPersonInGroup(string endpoint, string apiKey, string personGroupId, string personId,string pathToImage, string targetFace, System.Action<string> result)
+    public static IEnumerator DeletePersonInGroup(string endpoint, string apiKey, string personGroupId, string personId, System.Action<bool> result, System.Action<string> error)
+    {
+        string request = endpoint + "/persongroups/" + personGroupId + "/persons/" + personId;
+        var www = new UnityWebRequest(request, "DELETE");
+        www.SetRequestHeader("Ocp-Apim-Subscription-Key", apiKey);
+        yield return www.SendWebRequest();
+
+        if (www.isNetworkError)
+        {
+            error(www.error);
+            result(false);
+        }
+        else
+        {
+            if (!string.IsNullOrEmpty(www.error))
+            {
+                error(www.error);
+                result(false);
+            }
+            else
+            {
+                error(www.downloadHandler.text);
+                result(true);
+            }
+        }
+
+    }
+
+    public static IEnumerator AddFaceToPersonInGroup(string endpoint, string apiKey, string personGroupId, string personId,string pathToImage, string targetFace,System.Action<bool> result, System.Action<string> persistedFaceID)
     {
         string request = endpoint + "/persongroups/" + personGroupId + "/persons/" + personId + "/persistedFaces" ;
         
@@ -287,24 +318,27 @@ public static class RequestManager
 
         if (www.isNetworkError)
         {
-            result(www.error);
+            Debug.Log("AddFaceToPersonInGroup error : " + www.error);
+            result(false);
         }
         else
         {
             if (!string.IsNullOrEmpty(www.error))
             {
-                result(www.error);
+                Debug.Log("AddFaceToPersonInGroup error : " + www.error);
+                result(false);
             }
             else
             {
-                result(www.downloadHandler.text);
+                result(true);
+                persistedFaceID(www.downloadHandler.text);
             }
         }
 
     }
 
 
-    public static IEnumerator TrainPersonGroup(string endpoint, string apiKey, string personGroupId, System.Action<string> result)
+    public static IEnumerator TrainPersonGroup(string endpoint, string apiKey, string personGroupId, System.Action<bool> result, System.Action<string> error)
     {
         string request = endpoint + "/persongroups/" + personGroupId + "/train";
 
@@ -317,17 +351,20 @@ public static class RequestManager
 
         if (www.isNetworkError)
         {
-            result(www.error);
+            error(www.error);
+            result(false);
         }
         else
         {
             if (!string.IsNullOrEmpty(www.error))
             {
-                result(www.error);
+                error(www.error);
+                result(false);
             }
             else
             {
-                result(www.downloadHandler.text);
+                error(www.downloadHandler.text);
+                result(true);
             }
         }
 

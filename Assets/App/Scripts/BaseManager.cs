@@ -8,13 +8,15 @@ public class BaseManager : MonoBehaviour
     GameObject m_MainCanvas;
 
     [SerializeField]
+    GameObject m_UiDisplay;
+
+    [SerializeField]
     GameObject m_AzureManager;
 
-    [SerializeField]
-    GameObject m_StandbyUi;
+    CaptureManager m_CaptureManager;
 
     [SerializeField]
-    GameObject m_RegistrationUi;
+    GameObject m_DoorManager;
 
     public enum AppState
     {
@@ -28,8 +30,9 @@ public class BaseManager : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        InstantiateUi(m_State);
+        InstantiateUi();
         InstantiateManagers();
+        m_CaptureManager = m_UiDisplay.GetComponent<CaptureManager>();
     }
 
     void InstantiateManagers()
@@ -37,9 +40,13 @@ public class BaseManager : MonoBehaviour
         GameObject azureMgr = Instantiate(m_AzureManager);
         azureMgr.name = "AzureManager";
         azureMgr.transform.SetParent(transform);
+
+        GameObject doorManager = Instantiate(m_DoorManager);
+        doorManager.name = "DoorManager";
+        doorManager.transform.SetParent(transform);
     }
 
-    void InstantiateUi(AppState state)
+    void InstantiateUi()
     {
         m_MainCanvas = GameObject.FindGameObjectWithTag("Canvas");
         if (m_MainCanvas == null)
@@ -47,25 +54,11 @@ public class BaseManager : MonoBehaviour
             Debug.LogError(Constants.CANVAS_NOT_FOUND);
             return;
         }
-        switch (state)
-        {
-            case AppState.STANDBY:
-                GameObject main = Instantiate(m_StandbyUi);
-                main.transform.SetParent(m_MainCanvas.transform, false);
-                main.transform.localPosition = Vector3.zero;
-                main.transform.localScale = new Vector3(1f, 1f, 1f);
-                break;
-
-            case AppState.REGISTRATION:
-                GameObject reg = Instantiate(m_RegistrationUi);
-                reg.transform.SetParent(m_MainCanvas.transform, false);
-                reg.transform.localPosition = Vector3.zero;
-                reg.transform.localScale = new Vector3(1f, 1f, 1f);
-                break;
-
-            default:
-                break;
-        }
+      
+        GameObject main = Instantiate(m_UiDisplay);
+        main.transform.SetParent(m_MainCanvas.transform, false);
+        main.transform.localPosition = Vector3.zero;
+        main.transform.localScale = new Vector3(1f, 1f, 1f);
     }
 
     public AppState GetState()

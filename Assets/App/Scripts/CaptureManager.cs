@@ -25,8 +25,7 @@ public class CaptureManager : MonoBehaviour
     WebcamManager m_WebcamManager;
     WebCamTexture m_WebcamTexture;
 
-    public System.Action OnCapture;
-    public System.Action OnGroupSelection;
+    public System.Action<Texture2D> OnCapture;
 
     // Start is called before the first frame update
     void Start()
@@ -57,7 +56,20 @@ public class CaptureManager : MonoBehaviour
 
     public void Capture()
     {
+        Texture2D snapshot = new Texture2D(m_WebcamTexture.width, m_WebcamTexture.height);
+        snapshot.SetPixels32(m_WebcamTexture.GetPixels32());
+        snapshot.Apply();
+
         m_StatusManager.ShowStatus(Constants.CAPTURING);
+        if(OnCapture != null)
+        {
+            OnCapture.Invoke(snapshot);
+        }
+    }
+
+    public void StopCamera()
+    {
+        m_WebcamTexture.Stop();
     }
 
     private void OnApplicationQuit()
