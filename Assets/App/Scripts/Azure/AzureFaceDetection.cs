@@ -39,6 +39,10 @@ public class AzureFaceDetection : MonoBehaviour
     public System.Action OnPersonInGroupDeleted;
     public System.Action<string> OnPersonCreated;
     public System.Action OnTrainingSuccess;
+    public System.Action<List<FacesBasic.FacesDetectionResponse>> OnFacesFound;
+    public System.Action OnFacesNotFound;
+    public System.Action<List<IdentifiedFaces.IdentifiedFacesResponse>> OnFaceIdentified;
+    public System.Action OnFaceNotIdentified;
 
     private void Start()
     {
@@ -165,5 +169,37 @@ public class AzureFaceDetection : MonoBehaviour
             OnFacesAddedToPerson.Invoke();
         }
 
+    }
+
+    public IEnumerator DetermineFaceArea(string personGroup, string targetImage)
+    {
+        bool faceFound = false;
+        List<FacesBasic.FacesDetectionResponse> faces = new List<FacesBasic.FacesDetectionResponse>();
+        yield return RequestManager.DetectFaces(m_Endpoint, m_ApiKey, targetImage, res => faceFound = res, value => faces = value);
+
+        if (faceFound && OnFacesFound != null)
+        {
+            OnFacesFound.Invoke(faces);
+        }
+        else
+        {
+            if (OnFacesNotFound != null) OnFacesNotFound.Invoke();
+        }
+    }
+
+    public IEnumerator Identify(string personGroup, FacesBasic.FacesDetectionResponse[] faces)
+    {
+        bool identified = false;
+        List<IdentifiedFaces.IdentifiedFacesResponse> identifiedFaces = new List<IdentifiedFaces.IdentifiedFacesResponse>();
+        string errors = "";
+        yield return RequestManager.Identify(m_Endpoint, m_ApiKey, m_PersonGroupId, faces, res => identified = res, err => errors = err, value => identifiedFaces = value);
+        if (identified && OnFaceIdentified != null)
+        {
+            OnFaceIdentified.Invoke(identifiedFaces);
+        }
+        else
+        {
+            if (OnFaceNotIdentified != null) OnFaceNotIdentified.Invoke();
+        }
     }
 }

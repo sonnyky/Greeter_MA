@@ -10,14 +10,18 @@ public class DetectionManager : MonoBehaviour
     AzureFaceDetection m_AzureFaceDetection;
     RegistrationManager m_RegistrationManager;
 
-    string m_RuntimeImage;
+    string m_RuntimeImage = Application.dataPath + Constants.PREFIX_DETECTION_IMAGES_PATH + "main.jpg";
 
     string m_PersonGroupId = "default";
     float m_Timeout = 10f; // Wait 10 seconds before declaring network problems
 
+    List<PersonInGroup.Person> m_PersonsInGroup;
+
     // Start is called before the first frame update
     void Start()
     {
+        m_PersonsInGroup = new List<PersonInGroup.Person>();
+
         m_StatusManager = FindObjectOfType<StatusManager>();
         m_AzureFaceDetection = FindObjectOfType<AzureFaceDetection>();
         m_CaptureManager = FindObjectOfType<CaptureManager>();
@@ -36,17 +40,30 @@ public class DetectionManager : MonoBehaviour
         m_AzureFaceDetection.OnPersonListEmpty += CreatePersonInGroup;
         m_AzureFaceDetection.OnPersonInGroupDeleted += GetPersonListInGroup;
         m_AzureFaceDetection.OnPersonCreated += StartRegistration;
+        m_AzureFaceDetection.OnPersonGroupNotTrained += Train;
+        m_AzureFaceDetection.OnTrainingSuccess += DetermineFaceArea;
+        m_AzureFaceDetection.OnFacesNotFound += RestartFlow;
+        m_AzureFaceDetection.OnFacesFound += Identify;
+        m_AzureFaceDetection.OnFaceNotIdentified += CreatePersonInGroup;
+        m_AzureFaceDetection.OnFaceIdentified += CheckIdentifiedFaceIsKnown;
+    }
+
+    public void Init()
+    {
+        m_CaptureManager.OnCapture += Entry;
+        m_PersonsInGroup.Clear();
     }
 
     void Entry(Texture2D snapshot)
     {
+        m_PersonsInGroup.Clear();
         m_StatusManager.ShowStatus("Attempting to recognize face");
         if(!Directory.Exists(Application.dataPath + Constants.PREFIX_DETECTION_IMAGES_PATH))
         {
             Folders.Create(Application.dataPath + Constants.PREFIX_DETECTION_IMAGES_PATH);
         }
-        m_RuntimeImage = Application.dataPath + Constants.PREFIX_DETECTION_IMAGES_PATH;
-        System.IO.File.WriteAllBytes(m_RuntimeImage + "main.jpg", snapshot.EncodeToJPG());
+       
+        System.IO.File.WriteAllBytes(m_RuntimeImage, snapshot.EncodeToJPG());
         StartCoroutine(m_AzureFaceDetection.Get(m_PersonGroupId));
     }
 
@@ -57,6 +74,7 @@ public class DetectionManager : MonoBehaviour
 
     void GetPersonListInGroup()
     {
+        m_StatusManager.ShowStatus("Getting person list");
         StartCoroutine(m_AzureFaceDetection.GetPersonList(m_PersonGroupId));
     }
 
@@ -64,6 +82,7 @@ public class DetectionManager : MonoBehaviour
     {
         if(list.Count == 0)
         {
+            Debug.Log("not all persons have faces");
             CreatePersonInGroup();
         }
 
@@ -72,6 +91,7 @@ public class DetectionManager : MonoBehaviour
         {
             if(list[i].persistedFaceIds.Length == 0)
             {
+                Debug.Log("deleting face : " + list[i].personId);
                 StartCoroutine(m_AzureFaceDetection.DeletePersonInGroup(m_PersonGroupId, list[i].personId));
                 break;
             }
@@ -84,6 +104,7 @@ public class DetectionManager : MonoBehaviour
         // We managed to loop through the Person list and not find a Person without Faces
         if(personChecked == list.Count)
         {
+            Debug.Log("get person group training status");
             GetPersonGroupTrainingStatus();
         }
     }
@@ -108,7 +129,66 @@ public class DetectionManager : MonoBehaviour
 
     void GetPersonGroupTrainingStatus()
     {
-
+        StartCoroutine(m_AzureFaceDetection.GetTrainingStatus(m_PersonGroupId));
     }
 
+    void Train()
+    {
+        StartCoroutine(m_AzureFaceDetection.Train(m_PersonGroupId));
+    }
+
+    void DetermineFaceArea()
+    {
+        StartCoroutine(m_AzureFaceDetection.DetermineFaceArea(m_PersonGroupId, m_RuntimeImage));
+    }
+
+    void RestartFlow()
+    {
+        m_StatusManager.ShowStatus(Constants.RESTART_DETECTION_FLOW);
+    }
+
+    void Identify(List<FacesBasic.FacesDetectionResponse> faces)
+    {
+        StartCoroutine(m_AzureFaceDetection.Identify(m_PersonGroupId, faces.ToArray()));
+    }
+
+    void CheckIdentifiedFaceIsKnown(List<IdentifiedFaces.IdentifiedFacesResponse> identifiedFaces)
+    {
+        int index = 0;
+        float conf = 0f;
+        if(identifiedFaces.Count > 1)
+        {
+            RestartFlow(); // because we want to detect one person at a time
+        }
+        else
+        {
+            for(int i=0; i<identifiedFaces[0].candidates.Length; i++)
+            {
+                if(identifiedFaces[0].candidates[i].confidence > conf)
+                {
+                    conf = identifiedFaces[0].candidates[i].confidence;
+                    index = i;
+                }
+            }
+            string personIdToIdentify = identifiedFaces[0].candidates[index].personId;
+
+            bool personKnown = false;
+            for(int j=0; j<m_PersonsInGroup.Count; j++)
+            {
+                if (personIdToIdentify.Equals(m_PersonsInGroup[j].personId))
+                {
+                    personKnown = true;
+                }
+            }
+
+            if (personKnown)
+            {
+                m_StatusManager.ShowStatus(Constants.PERSON_KNOWN);
+            }
+            else
+            {
+                m_StatusManager.ShowStatus(Constants.PERSON_UNKNOWN);
+            }
+        }
+    }
 }

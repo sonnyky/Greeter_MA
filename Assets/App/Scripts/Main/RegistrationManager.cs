@@ -27,7 +27,7 @@ public class RegistrationManager : MonoBehaviour
         m_PersonFacesFolder = Application.dataPath + Constants.PREFIX_TRAIN_IMAGES_PATH + Constants.PREFIX_TRAIN_IMAGE_NAME;
         ClearTrainFolder();
         m_AzureFaceDetection.OnFacesAddedToPerson += Train;
-
+        m_AzureFaceDetection.OnTrainingSuccess += DetectAgain;
     }
 
     /// <summary>
@@ -83,7 +83,7 @@ public class RegistrationManager : MonoBehaviour
 
     void Train()
     {
-
+        StartCoroutine(m_AzureFaceDetection.Train(m_PersonGroup));
     }
 
     /// <summary>
@@ -91,7 +91,10 @@ public class RegistrationManager : MonoBehaviour
     /// </summary>
     void DetectAgain()
     {
-        
+        m_StatusManager.ShowStatus("Training done. Recognizing...");
+        m_CaptureManager.OnCapture = null;
+        m_DetectionManager.Init();
+        StartCoroutine(m_AzureFaceDetection.Get(m_PersonGroup));
     }
 
     void ClearTrainFolder()

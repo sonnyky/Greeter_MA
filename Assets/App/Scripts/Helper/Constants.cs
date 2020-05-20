@@ -37,6 +37,9 @@ public static class Constants
     public static string READY_TO_DETECT = "Ready to detect";
     public static string TRYING_RECOGNITION = "Trying to recognize face";
     public static string NEED_TO_CAPTURE_FACES = "Press red button to capture faces";
-    public static string REGISTERING = "Registering..."
+    public static string REGISTERING = "Registering...";
+    public static string RESTART_DETECTION_FLOW = "Please recapture";
     public static string CAPTURING = PREFIX + "Capturing";
+    public static string PERSON_KNOWN = "Known person";
+    public static string PERSON_UNKNOWN = "Unknown person";
 }
