@@ -2,11 +2,12 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 public class StatusManager : MonoBehaviour
 {
     [SerializeField]
-    Text m_StatusText;
+    TextMeshProUGUI m_StatusText;
 
     public void ShowStatus(string status)
     {

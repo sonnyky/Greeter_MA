@@ -33,6 +33,10 @@ public static class Constants
     public static string CANVAS_NOT_FOUND = PREFIX + "Main canvas not found";
     public static string UI_MANAGER_NOT_FOUND = PREFIX + "UI Manager not found";
 
-    // In process
+    // Status
+    public static string READY_TO_DETECT = "Ready to detect";
+    public static string TRYING_RECOGNITION = "Trying to recognize face";
+    public static string NEED_TO_CAPTURE_FACES = "Press red button to capture faces";
+    public static string REGISTERING = "Registering..."
     public static string CAPTURING = PREFIX + "Capturing";
 }

@@ -5,6 +5,7 @@ using UnityEngine;
 
 public class DetectionManager : MonoBehaviour
 {
+    StatusManager m_StatusManager;
     CaptureManager m_CaptureManager;
     AzureFaceDetection m_AzureFaceDetection;
     RegistrationManager m_RegistrationManager;
@@ -17,6 +18,7 @@ public class DetectionManager : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        m_StatusManager = FindObjectOfType<StatusManager>();
         m_AzureFaceDetection = FindObjectOfType<AzureFaceDetection>();
         m_CaptureManager = FindObjectOfType<CaptureManager>();
         m_RegistrationManager = GetComponent<RegistrationManager>();
@@ -38,6 +40,7 @@ public class DetectionManager : MonoBehaviour
 
     void Entry(Texture2D snapshot)
     {
+        m_StatusManager.ShowStatus("Attempting to recognize face");
         if(!Directory.Exists(Application.dataPath + Constants.PREFIX_DETECTION_IMAGES_PATH))
         {
             Folders.Create(Application.dataPath + Constants.PREFIX_DETECTION_IMAGES_PATH);

@@ -52,6 +52,7 @@ public class AzureManager : Singleton
 #endif
             if (m_ApiKey != null && !m_ApiKey.Equals(Constants.NONE))
             {
+                m_StatusManager.ShowStatus("Ready");
                 m_Ready = true;
             }
         }
