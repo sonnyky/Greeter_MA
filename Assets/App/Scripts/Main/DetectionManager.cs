@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
 
 public class DetectionManager : MonoBehaviour
@@ -8,12 +9,15 @@ public class DetectionManager : MonoBehaviour
     AzureFaceDetection m_AzureFaceDetection;
     RegistrationManager m_RegistrationManager;
 
+    string m_RuntimeImage;
+
     string m_PersonGroupId = "default";
     float m_Timeout = 10f; // Wait 10 seconds before declaring network problems
 
     // Start is called before the first frame update
     void Start()
     {
+        m_AzureFaceDetection = FindObjectOfType<AzureFaceDetection>();
         m_CaptureManager = FindObjectOfType<CaptureManager>();
         m_RegistrationManager = GetComponent<RegistrationManager>();
         // Subscribe to dropdown UI to get person group ID. Not critical for the demo
@@ -27,13 +31,19 @@ public class DetectionManager : MonoBehaviour
         m_AzureFaceDetection.OnPersonGroupExists += GetPersonListInGroup;
         m_AzureFaceDetection.OnPersonGroupCreated += GetPersonListInGroup;
         m_AzureFaceDetection.OnPersonListNotEmpty += CheckAllPersonsHaveFaces;
-        m_AzureFaceDetection.OnPersonListEmpty += CreatePersonGroup;
+        m_AzureFaceDetection.OnPersonListEmpty += CreatePersonInGroup;
         m_AzureFaceDetection.OnPersonInGroupDeleted += GetPersonListInGroup;
         m_AzureFaceDetection.OnPersonCreated += StartRegistration;
     }
 
-    void Entry()
+    void Entry(Texture2D snapshot)
     {
+        if(!Directory.Exists(Application.dataPath + Constants.PREFIX_DETECTION_IMAGES_PATH))
+        {
+            Folders.Create(Application.dataPath + Constants.PREFIX_DETECTION_IMAGES_PATH);
+        }
+        m_RuntimeImage = Application.dataPath + Constants.PREFIX_DETECTION_IMAGES_PATH;
+        System.IO.File.WriteAllBytes(m_RuntimeImage + "main.jpg", snapshot.EncodeToJPG());
         StartCoroutine(m_AzureFaceDetection.Get(m_PersonGroupId));
     }
 

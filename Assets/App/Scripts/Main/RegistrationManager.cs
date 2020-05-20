@@ -19,10 +19,13 @@ public class RegistrationManager : MonoBehaviour
 
     void Start()
     {
-        m_DetectionManager = GetComponent<DetectionManager>();
+        m_StatusManager = FindObjectOfType<StatusManager>();
+        m_AzureFaceDetection = FindObjectOfType<AzureFaceDetection>();
         m_CaptureManager = FindObjectOfType<CaptureManager>();
-        m_PersonFacesFolder = Application.dataPath + Constants.PREFIX_TRAIN_IMAGES_PATH + Constants.PREFIX_TRAIN_IMAGE_NAME + m_PersonId;
+        m_DetectionManager = GetComponent<DetectionManager>();
 
+        m_PersonFacesFolder = Application.dataPath + Constants.PREFIX_TRAIN_IMAGES_PATH + Constants.PREFIX_TRAIN_IMAGE_NAME;
+        ClearTrainFolder();
         m_AzureFaceDetection.OnFacesAddedToPerson += Train;
 
     }
@@ -35,6 +38,7 @@ public class RegistrationManager : MonoBehaviour
     /// <param name="personId"></param>
     public void Register(string personGroup, string personId)
     {
+        m_StatusManager.ShowStatus("Press button to register photo");
         m_CaptureManager.OnCapture += CaptureFaces;
         m_PersonId = personId;
         m_PersonGroup = personGroup;
@@ -47,12 +51,12 @@ public class RegistrationManager : MonoBehaviour
     void CaptureFaces(Texture2D snapshot)
     {
         if (m_PhotosTaken == m_NumberOfRequiredFaces) return;
-
-        if (!Directory.Exists(m_PersonFacesFolder))
+        string personFolder = Application.dataPath + Constants.PREFIX_TRAIN_IMAGES_PATH + Constants.PREFIX_TRAIN_IMAGE_NAME + m_PersonId;
+        if (!Directory.Exists(personFolder))
         {
-            Folders.Create(m_PersonFacesFolder);
+            Folders.Create(personFolder);
         }
-        File.WriteAllBytes(m_PersonFacesFolder + "/" + m_PersonId + "_" + m_PhotosTaken.ToString() + ".jpg", snapshot.EncodeToJPG());
+        File.WriteAllBytes(personFolder + "/" + m_PersonId + "_" + m_PhotosTaken.ToString() + ".jpg", snapshot.EncodeToJPG());
         Debug.Log("Capture button pressed during registration");
         m_PhotosTaken++;
         m_StatusManager.ShowStatus("Capturing : " + m_PhotosTaken + " of 3");
@@ -82,4 +86,19 @@ public class RegistrationManager : MonoBehaviour
 
     }
 
+    /// <summary>
+    /// This method is the bridge to return control flow back to the Detection Manager
+    /// </summary>
+    void DetectAgain()
+    {
+        
+    }
+
+    void ClearTrainFolder()
+    {
+        if (Directory.Exists(m_PersonFacesFolder))
+        {
+            Directory.Delete(m_PersonFacesFolder);
+        }
+    }
 }

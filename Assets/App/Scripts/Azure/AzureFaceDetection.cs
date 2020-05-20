@@ -100,9 +100,9 @@ public class AzureFaceDetection : MonoBehaviour
     public IEnumerator CreatePersonInGroup(string personGroup, string name, string userData)
     {
         yield return RequestManager.CreatePersonInGroup(m_Endpoint, m_ApiKey, personGroup, name, userData, value => personCreated = value, success => m_PersonCreatedSuccess = success);
-        if (personCreated)
+        if (personCreated && OnPersonCreated != null)
         {
-            if (OnPersonCreated != null) OnPersonCreated.Invoke(m_PersonCreatedSuccess.personId);
+            OnPersonCreated.Invoke(m_PersonCreatedSuccess.personId);
         }
     }
 
