@@ -60,12 +60,6 @@ public class DetectionManager : MonoBehaviour
     void Entry(Texture2D snapshot)
     {
         m_PersonsInGroup.Clear();
-
-        if (!m_CaptureManager.IsCameraActive())
-        {
-            m_CaptureManager.StartCapture();
-        }
-
         m_StatusManager.ShowStatus("Attempting to recognize face");
         if(!Directory.Exists(Application.dataPath + Constants.PREFIX_DETECTION_IMAGES_PATH))
         {
@@ -167,6 +161,7 @@ public class DetectionManager : MonoBehaviour
     {
         int index = 0;
         float conf = 0f;
+
         if(identifiedFaces.Count > 1)
         {
             RestartFlow(); // because we want to detect one person at a time
@@ -196,11 +191,13 @@ public class DetectionManager : MonoBehaviour
             {
                 m_StatusManager.ShowStatus(Constants.PERSON_KNOWN);
                 m_StatusManager.SetDetectionIcon(0);
+                StartCoroutine(StopCamera());
             }
             else
             {
                 m_StatusManager.ShowStatus(Constants.PERSON_UNKNOWN);
                 m_StatusManager.SetDetectionIcon(1);
+                CreatePersonInGroup();
             }
         }
     }

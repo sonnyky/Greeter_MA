@@ -27,6 +27,8 @@ public class CaptureManager : MonoBehaviour
 
     public System.Action<Texture2D> OnCapture;
 
+    WaitForSeconds m_WaitTimeAfterCameraStart = new WaitForSeconds(3f);
+
     // Start is called before the first frame update
     void Start()
     {
@@ -34,7 +36,7 @@ public class CaptureManager : MonoBehaviour
         InitializeCamera();
         m_CaptureButton.onClick.AddListener(() =>
         {
-            Capture();
+            CapturePrep();
         });
     }
 
@@ -54,14 +56,24 @@ public class CaptureManager : MonoBehaviour
         }
     }
 
-    public void Capture()
+    public void CapturePrep()
     {
+        if (!m_WebcamTexture.isPlaying)
+        {
+            m_WebcamTexture.Play();
+        }
+        StartCoroutine(Capture());
+    }
+
+    IEnumerator Capture()
+    {
+        yield return m_WaitTimeAfterCameraStart;
         Texture2D snapshot = new Texture2D(m_WebcamTexture.width, m_WebcamTexture.height);
         snapshot.SetPixels32(m_WebcamTexture.GetPixels32());
         snapshot.Apply();
 
         m_StatusManager.ShowStatus(Constants.CAPTURING);
-        if(OnCapture != null)
+        if (OnCapture != null)
         {
             OnCapture.Invoke(snapshot);
         }
@@ -76,6 +88,8 @@ public class CaptureManager : MonoBehaviour
     {
         m_WebcamTexture.Stop();
     }
+
+    // Public interfaces
 
     public void StopCapture()
     {
