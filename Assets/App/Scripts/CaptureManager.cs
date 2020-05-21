@@ -29,6 +29,13 @@ public class CaptureManager : MonoBehaviour
 
     WaitForSeconds m_WaitTimeAfterCameraStart = new WaitForSeconds(3f);
 
+    Color32[] inputPixelData;
+    Color32[] processedPixelData;
+    GCHandle inputPixelHandle;
+    IntPtr inputPixelPtr;
+    GCHandle processedPixelHandle;
+    IntPtr processedPixelPtr;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -38,6 +45,16 @@ public class CaptureManager : MonoBehaviour
         {
             CapturePrep();
         });
+    }
+
+    void InitTexturePointers()
+    {
+        inputPixelData = m_OriginalTexture.GetPixels32();
+        processedPixelData = m_ProcessedTexture.GetPixels32();
+        inputPixelHandle = GCHandle.Alloc(inputPixelData, GCHandleType.Pinned);
+        inputPixelPtr = inputPixelHandle.AddrOfPinnedObject();
+        processedPixelHandle = GCHandle.Alloc(processedPixelData, GCHandleType.Pinned);
+        processedPixelPtr = processedPixelHandle.AddrOfPinnedObject();
     }
 
     void InitializeCamera()
