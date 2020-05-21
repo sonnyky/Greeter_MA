@@ -24,7 +24,7 @@ public class RegistrationManager : MonoBehaviour
         m_CaptureManager = FindObjectOfType<CaptureManager>();
         m_DetectionManager = GetComponent<DetectionManager>();
 
-        m_PersonFacesFolder = Application.dataPath + Constants.PREFIX_TRAIN_IMAGES_PATH + Constants.PREFIX_TRAIN_IMAGE_NAME;
+        m_PersonFacesFolder = Application.dataPath + Constants.PREFIX_TRAIN_IMAGES_PATH;
         ClearTrainFolder();
         m_AzureFaceDetection.OnFacesAddedToPerson += Train;
         m_AzureFaceDetection.OnTrainingSuccess += DetectAgain;
@@ -99,9 +99,11 @@ public class RegistrationManager : MonoBehaviour
 
     void ClearTrainFolder()
     {
+        Debug.Log("checking train folder.. : "+ m_PersonFacesFolder);
         if (Directory.Exists(m_PersonFacesFolder))
         {
-            Directory.Delete(m_PersonFacesFolder);
+            Debug.Log("deleting train folder");
+            Directory.Delete(m_PersonFacesFolder, true);
         }
     }
 }

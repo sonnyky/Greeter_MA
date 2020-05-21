@@ -40,6 +40,6 @@ public static class Constants
     public static string REGISTERING = "Registering...";
     public static string RESTART_DETECTION_FLOW = "Please recapture";
     public static string CAPTURING = PREFIX + "Capturing";
-    public static string PERSON_KNOWN = "Known person";
+    public static string PERSON_KNOWN = "Verified";
     public static string PERSON_UNKNOWN = "Unknown person";
 }

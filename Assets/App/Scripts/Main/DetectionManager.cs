@@ -10,7 +10,7 @@ public class DetectionManager : MonoBehaviour
     AzureFaceDetection m_AzureFaceDetection;
     RegistrationManager m_RegistrationManager;
 
-    string m_RuntimeImage = Application.dataPath + Constants.PREFIX_DETECTION_IMAGES_PATH + "main.jpg";
+    string m_RuntimeImage="";
 
     string m_PersonGroupId = "default";
     float m_Timeout = 10f; // Wait 10 seconds before declaring network problems
@@ -21,7 +21,7 @@ public class DetectionManager : MonoBehaviour
     void Start()
     {
         m_PersonsInGroup = new List<PersonInGroup.Person>();
-
+        m_RuntimeImage = Application.dataPath + Constants.PREFIX_DETECTION_IMAGES_PATH + "main.jpg";
         m_StatusManager = FindObjectOfType<StatusManager>();
         m_AzureFaceDetection = FindObjectOfType<AzureFaceDetection>();
         m_CaptureManager = FindObjectOfType<CaptureManager>();
@@ -41,6 +41,7 @@ public class DetectionManager : MonoBehaviour
         m_AzureFaceDetection.OnPersonInGroupDeleted += GetPersonListInGroup;
         m_AzureFaceDetection.OnPersonCreated += StartRegistration;
         m_AzureFaceDetection.OnPersonGroupNotTrained += Train;
+        m_AzureFaceDetection.OnPersonGroupTrained += DetermineFaceArea;
         m_AzureFaceDetection.OnTrainingSuccess += DetermineFaceArea;
         m_AzureFaceDetection.OnFacesNotFound += RestartFlow;
         m_AzureFaceDetection.OnFacesFound += Identify;
@@ -80,7 +81,9 @@ public class DetectionManager : MonoBehaviour
 
     void CheckAllPersonsHaveFaces(List<PersonInGroup.Person> list)
     {
-        if(list.Count == 0)
+        m_PersonsInGroup.Clear();
+        m_PersonsInGroup.AddRange(list);
+        if (list.Count == 0)
         {
             Debug.Log("not all persons have faces");
             CreatePersonInGroup();
@@ -173,7 +176,7 @@ public class DetectionManager : MonoBehaviour
             string personIdToIdentify = identifiedFaces[0].candidates[index].personId;
 
             bool personKnown = false;
-            for(int j=0; j<m_PersonsInGroup.Count; j++)
+            for (int j=0; j<m_PersonsInGroup.Count; j++)
             {
                 if (personIdToIdentify.Equals(m_PersonsInGroup[j].personId))
                 {
