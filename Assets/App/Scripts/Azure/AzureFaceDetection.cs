@@ -63,6 +63,11 @@ public class AzureFaceDetection : MonoBehaviour
 
     public IEnumerator Get(string personGroup)
     {
+        if (m_ApiKey.Equals(Constants.NONE))
+        {
+            m_ApiKey = m_AzureManager.GetApiKey();
+        }
+       
         yield return RequestManager.GetPersonGroup(m_Endpoint, m_ApiKey, personGroup, value => personGroupExists = value);
         if (personGroupExists && OnPersonGroupExists != null)
         {
@@ -171,7 +176,7 @@ public class AzureFaceDetection : MonoBehaviour
 
     }
 
-    public IEnumerator DetermineFaceArea(string personGroup, string targetImage)
+    public IEnumerator DetermineFaceArea(string personGroup, Texture2D targetImage)
     {
         bool faceFound = false;
         List<FacesBasic.FacesDetectionResponse> faces = new List<FacesBasic.FacesDetectionResponse>();

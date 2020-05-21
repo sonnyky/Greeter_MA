@@ -1,0 +1,1 @@
+https://japaneast.api.cognitive.microsoft.com/face/v1.0,19f4b0faf84841b9b21517269e3d54d9

@@ -241,13 +241,13 @@ public static class RequestManager
     }
 
 
-    public static IEnumerator DetectFaces(string endpoint, string apiKey, string pathToImage, 
+    public static IEnumerator DetectFaces(string endpoint, string apiKey, Texture2D image, 
         System.Action<bool> result, System.Action<List<FacesBasic.FacesDetectionResponse>> data)
     {
         string request = endpoint + "/detect";
 
         var www = new UnityWebRequest(request, "POST");
-        byte[] bodyRaw = File.ReadAllBytes(pathToImage);
+        byte[] bodyRaw = image.EncodeToJPG();
         www.uploadHandler = (UploadHandler)new UploadHandlerRaw(bodyRaw);
         www.downloadHandler = (DownloadHandler)new DownloadHandlerBuffer();
         www.SetRequestHeader("Content-Type", "application/octet-stream");

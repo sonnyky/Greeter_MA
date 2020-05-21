@@ -13,6 +13,7 @@ public class DetectionManager : MonoBehaviour
     WaitForSeconds m_TimeUntilCameraStops = new WaitForSeconds(5f);
 
     string m_RuntimeImage="";
+    Texture2D runtimeShot;
 
     string m_PersonGroupId = "default";
     float m_Timeout = 10f; // Wait 10 seconds before declaring network problems
@@ -22,6 +23,8 @@ public class DetectionManager : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        runtimeShot = new Texture2D(1, 1);
+
         m_PersonsInGroup = new List<PersonInGroup.Person>();
         m_RuntimeImage = Application.dataPath + Constants.PREFIX_DETECTION_IMAGES_PATH + "main.jpg";
         m_StatusManager = FindObjectOfType<StatusManager>();
@@ -61,12 +64,7 @@ public class DetectionManager : MonoBehaviour
     {
         m_PersonsInGroup.Clear();
         m_StatusManager.ShowStatus("Attempting to recognize face");
-        if(!Directory.Exists(Application.dataPath + Constants.PREFIX_DETECTION_IMAGES_PATH))
-        {
-            Folders.Create(Application.dataPath + Constants.PREFIX_DETECTION_IMAGES_PATH);
-        }
-       
-        System.IO.File.WriteAllBytes(m_RuntimeImage, snapshot.EncodeToJPG());
+        runtimeShot = snapshot;
         StartCoroutine(m_AzureFaceDetection.Get(m_PersonGroupId));
     }
 
@@ -144,7 +142,7 @@ public class DetectionManager : MonoBehaviour
 
     void DetermineFaceArea()
     {
-        StartCoroutine(m_AzureFaceDetection.DetermineFaceArea(m_PersonGroupId, m_RuntimeImage));
+        StartCoroutine(m_AzureFaceDetection.DetermineFaceArea(m_PersonGroupId, runtimeShot));
     }
 
     void RestartFlow()
