@@ -6,26 +6,28 @@ using System.Runtime.InteropServices;
 using UnityEngine;
 using UnityEngine.UI;
 
-[RequireComponent(typeof(CvPlugin))]
 public class CaptureManager : MonoBehaviour
 {
+    enum CaptureState {
+        STANDBY,
+        CAPTURE
+    }
+
     [SerializeField]
-    Text m_StatusText;
+    StatusManager m_StatusManager;
+
+    [SerializeField]
+    Button m_CaptureButton;
 
     [SerializeField]
     RawImage m_DetectionScreenImage;
 
-    CvPlugin m_CvPlugin;
-    string m_CascadeFileString = "";
-    int m_CascadeInitialized = 1;
-    bool m_IsCapturing = false;
-    bool m_IsCapturingEditor = false;
-
     WebcamManager m_WebcamManager;
     WebCamTexture m_WebcamTexture;
-    Color32[] data;
-    Texture2D m_OriginalTexture;
-    Texture2D m_ProcessedTexture;
+
+    public System.Action<Texture2D> OnCapture;
+
+    WaitForSeconds m_WaitTimeAfterCameraStart = new WaitForSeconds(3f);
 
     Color32[] inputPixelData;
     Color32[] processedPixelData;
@@ -36,17 +38,13 @@ public class CaptureManager : MonoBehaviour
 
     // Start is called before the first frame update
     void Start()
-    { 
-       m_WebcamManager = GetComponent<WebcamManager>();
-       InitializeCamera();
-       //InitTexturePointers();
-
-
-#if UNITY_ANDROID && !UNITY_EDITOR
-       m_CvPlugin = GetComponent<CvPlugin>();
-       m_StatusText.text = "Ver: " + m_CvPlugin.GetOpenCvVersion();
-       StartCoroutine("GetXmlFile");
-#endif
+    {
+        m_WebcamManager = GetComponent<WebcamManager>();
+        InitializeCamera();
+        m_CaptureButton.onClick.AddListener(() =>
+        {
+            CapturePrep();
+        });
     }
 
     void InitTexturePointers()
@@ -64,23 +62,10 @@ public class CaptureManager : MonoBehaviour
         string cameraName = m_WebcamManager.GetFrontCameraName();
         if (!cameraName.Equals("default"))
         {
-            m_WebcamTexture = new WebCamTexture(cameraName, 640, 480, 30);
-            data = new Color32[m_WebcamTexture.width * m_WebcamTexture.height];
+            m_WebcamTexture = new WebCamTexture(cameraName);
+            m_DetectionScreenImage.texture = m_WebcamTexture;
+            m_DetectionScreenImage.material.mainTexture = m_WebcamTexture;
             m_WebcamTexture.Play();
-
-#if UNITY_ANDROID && !UNITY_EDITOR
-            m_OriginalTexture = new Texture2D(m_WebcamTexture.width, m_WebcamTexture.height);
-            m_ProcessedTexture = new Texture2D(m_WebcamTexture.width, m_WebcamTexture.height);
-            m_DetectionScreenImage.material.mainTexture = m_OriginalTexture;
-            m_DetectionScreenImage.texture = m_OriginalTexture;
-            Debug.Log("[GreeterMALog] Webcam texture size : " + m_WebcamTexture.width + ", " + m_WebcamTexture.height);
-#endif
-#if UNITY_EDITOR
-            m_OriginalTexture = new Texture2D(m_WebcamTexture.width, m_WebcamTexture.height);
-            m_DetectionScreenImage.material.mainTexture = m_OriginalTexture;
-            m_DetectionScreenImage.texture = m_OriginalTexture;
-            m_IsCapturingEditor = true;
-#endif
         }
         else
         {
@@ -88,59 +73,54 @@ public class CaptureManager : MonoBehaviour
         }
     }
 
-    private void Update()
+    public void CapturePrep()
     {
-        if (m_IsCapturingEditor)
+        if (!m_WebcamTexture.isPlaying)
         {
-            m_OriginalTexture.SetPixels(m_WebcamTexture.GetPixels());
-            m_OriginalTexture.Apply();
+            m_WebcamTexture.Play();
         }
-        if (m_IsCapturing)
-        {
-            //m_OriginalTexture.SetPixels(m_WebcamTexture.GetPixels());
-            //m_OriginalTexture.Apply();
-            ProcessImage();
-        }
-    }   
-  
-    void ProcessImage()
-    {
-        data = m_WebcamTexture.GetPixels32();
-        m_CvPlugin.Detect(ref data, m_OriginalTexture.width, m_OriginalTexture.height);
-        m_OriginalTexture.SetPixels32(data);
-        m_OriginalTexture.Apply();
+        StartCoroutine(Capture());
     }
 
-    private IEnumerator GetXmlFile()
+    IEnumerator Capture()
     {
-        var path = Path.Combine(Application.streamingAssetsPath, "lbpcascade_frontalface.xml");
-        using (var www = UnityEngine.Networking.UnityWebRequest.Get(path))
+        yield return m_WaitTimeAfterCameraStart;
+        Texture2D snapshot = new Texture2D(m_WebcamTexture.width, m_WebcamTexture.height);
+        snapshot.SetPixels32(m_WebcamTexture.GetPixels32());
+        snapshot.Apply();
+
+        m_StatusManager.ShowStatus(Constants.CAPTURING);
+        if (OnCapture != null)
         {
-            yield return www.SendWebRequest();
-
-            if (www.isNetworkError || www.isHttpError)
-            {
-                Debug.LogErrorFormat(this, "Unable to load file due to {0} - {1}", www.responseCode, www.error);
-                m_StatusText.text = "Loading XML status failed";
-            }
-            else
-            {
-                m_CascadeFileString = www.downloadHandler.text;
-                m_CascadeInitialized = m_CvPlugin.InitializeCascade(m_CascadeFileString);
-               
-                if (m_CascadeInitialized == 0)
-                {
-                    m_IsCapturing = true;
-                    m_StatusText.text = "Capture : " + m_IsCapturing;
-                }
-
-            }
+            OnCapture.Invoke(snapshot);
         }
+    }
+
+    public void StopCamera()
+    {
+        m_WebcamTexture.Stop();
     }
 
     private void OnApplicationQuit()
     {
-        m_IsCapturing = false;
         m_WebcamTexture.Stop();
     }
+
+    // Public interfaces
+
+    public void StopCapture()
+    {
+        m_WebcamTexture.Stop();
+    }
+
+    public void StartCapture()
+    {
+        m_WebcamTexture.Play();
+    }
+
+    public bool IsCameraActive()
+    {
+        return m_WebcamTexture.isPlaying;
+    }
+
 }

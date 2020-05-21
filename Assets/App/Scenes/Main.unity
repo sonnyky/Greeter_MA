@@ -163,7 +163,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f3570f31c5ac174488fcabbc80bdc0cb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_MainUi: {fileID: 4107139108503507843, guid: 0323375d2b29d594ea0ad0343f154f2e,
+  m_UiDisplay: {fileID: 4107139108503507843, guid: 0323375d2b29d594ea0ad0343f154f2e,
+    type: 3}
+  m_AzureManager: {fileID: 4800515080358061694, guid: bdd84c317d5bef9458b13ab12dbfee60,
+    type: 3}
+  m_DoorManager: {fileID: 1487609646196419067, guid: ecc1bbde00b01dc4a9e56bbc66a337be,
     type: 3}
 --- !u!1 &616784103
 GameObject:
