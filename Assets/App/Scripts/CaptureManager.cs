@@ -24,6 +24,7 @@ public class CaptureManager : MonoBehaviour
 
     WebcamManager m_WebcamManager;
     WebCamTexture m_WebcamTexture;
+    CvPlugin m_NativeCvPlugin;
 
     public System.Action<Texture2D> OnCapture;
 
@@ -40,21 +41,12 @@ public class CaptureManager : MonoBehaviour
     void Start()
     {
         m_WebcamManager = GetComponent<WebcamManager>();
+        m_NativeCvPlugin = GetComponent<CvPlugin>();
         InitializeCamera();
         m_CaptureButton.onClick.AddListener(() =>
         {
             CapturePrep();
         });
-    }
-
-    void InitTexturePointers()
-    {
-        inputPixelData = m_OriginalTexture.GetPixels32();
-        processedPixelData = m_ProcessedTexture.GetPixels32();
-        inputPixelHandle = GCHandle.Alloc(inputPixelData, GCHandleType.Pinned);
-        inputPixelPtr = inputPixelHandle.AddrOfPinnedObject();
-        processedPixelHandle = GCHandle.Alloc(processedPixelData, GCHandleType.Pinned);
-        processedPixelPtr = processedPixelHandle.AddrOfPinnedObject();
     }
 
     void InitializeCamera()
@@ -86,8 +78,20 @@ public class CaptureManager : MonoBehaviour
     {
         yield return m_WaitTimeAfterCameraStart;
         Texture2D snapshot = new Texture2D(m_WebcamTexture.width, m_WebcamTexture.height);
+
+        // Android devices gives images rotated by 90 degrees. So we rotate it again to detect faces properly.
+#if UNITY_ANDROID && !UNITY_EDITOR
+        Color32[] data = m_WebcamTexture.GetPixels32();
+        m_NativeCvPlugin.Flip(ref data, m_WebcamTexture.width, m_WebcamTexture.height, 90);
+        snapshot.SetPixels32(data);
+#endif
+#if UNITY_EDITOR
         snapshot.SetPixels32(m_WebcamTexture.GetPixels32());
+#endif
         snapshot.Apply();
+
+        m_DetectionScreenImage.texture = snapshot;
+        m_DetectionScreenImage.material.mainTexture = snapshot;
 
         m_StatusManager.ShowStatus(Constants.CAPTURING);
         if (OnCapture != null)
