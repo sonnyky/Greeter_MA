@@ -10,6 +10,8 @@ public class DetectionManager : MonoBehaviour
     AzureFaceDetection m_AzureFaceDetection;
     RegistrationManager m_RegistrationManager;
 
+    WaitForSeconds m_TimeUntilCameraStops = new WaitForSeconds(5f);
+
     string m_RuntimeImage="";
 
     string m_PersonGroupId = "default";
@@ -58,6 +60,12 @@ public class DetectionManager : MonoBehaviour
     void Entry(Texture2D snapshot)
     {
         m_PersonsInGroup.Clear();
+
+        if (!m_CaptureManager.IsCameraActive())
+        {
+            m_CaptureManager.StartCapture();
+        }
+
         m_StatusManager.ShowStatus("Attempting to recognize face");
         if(!Directory.Exists(Application.dataPath + Constants.PREFIX_DETECTION_IMAGES_PATH))
         {
@@ -187,11 +195,19 @@ public class DetectionManager : MonoBehaviour
             if (personKnown)
             {
                 m_StatusManager.ShowStatus(Constants.PERSON_KNOWN);
+                m_StatusManager.SetDetectionIcon(0);
             }
             else
             {
                 m_StatusManager.ShowStatus(Constants.PERSON_UNKNOWN);
+                m_StatusManager.SetDetectionIcon(1);
             }
         }
+    }
+
+    IEnumerator StopCamera()
+    {
+        yield return m_TimeUntilCameraStops;
+        m_CaptureManager.StopCamera();
     }
 }

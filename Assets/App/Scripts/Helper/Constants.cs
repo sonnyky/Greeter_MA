@@ -41,5 +41,7 @@ public static class Constants
     public static string RESTART_DETECTION_FLOW = "Please recapture";
     public static string CAPTURING = PREFIX + "Capturing";
     public static string PERSON_KNOWN = "Verified";
+    public static int PERSON_KNOWN_CODE = 0;
+    public static int PERSON_UNKNOWN_CODE = 1;
     public static string PERSON_UNKNOWN = "Unknown person";
 }

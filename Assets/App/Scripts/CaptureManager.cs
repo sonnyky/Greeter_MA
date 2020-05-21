@@ -76,4 +76,20 @@ public class CaptureManager : MonoBehaviour
     {
         m_WebcamTexture.Stop();
     }
+
+    public void StopCapture()
+    {
+        m_WebcamTexture.Stop();
+    }
+
+    public void StartCapture()
+    {
+        m_WebcamTexture.Play();
+    }
+
+    public bool IsCameraActive()
+    {
+        return m_WebcamTexture.isPlaying;
+    }
+
 }

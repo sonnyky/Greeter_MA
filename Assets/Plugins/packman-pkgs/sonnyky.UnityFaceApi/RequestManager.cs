@@ -301,7 +301,7 @@ public static class RequestManager
             }
             else
             {
-                error(www.downloadHandler.text);
+                //error(www.downloadHandler.text);
                 result(true);
             }
         }
