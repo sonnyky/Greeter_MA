@@ -10,12 +10,12 @@ public class RegistrationManager : MonoBehaviour
     CaptureManager m_CaptureManager;
     StatusManager m_StatusManager;
 
-    string m_PersonFacesFolder = "";
     string m_PersonId = "";
     string m_PersonGroup = "";
 
     int m_NumberOfRequiredFaces = 3;
     int m_PhotosTaken = 0;
+    List<Texture2D> m_PhotosToRegister;
 
     void Start()
     {
@@ -24,8 +24,7 @@ public class RegistrationManager : MonoBehaviour
         m_CaptureManager = FindObjectOfType<CaptureManager>();
         m_DetectionManager = GetComponent<DetectionManager>();
 
-        m_PersonFacesFolder = Application.dataPath + Constants.PREFIX_TRAIN_IMAGES_PATH;
-        ClearTrainFolder();
+        m_PhotosToRegister = new List<Texture2D>();
         m_AzureFaceDetection.OnFacesAddedToPerson += Train;
         m_AzureFaceDetection.OnTrainingSuccess += DetectAgain;
     }
@@ -38,6 +37,7 @@ public class RegistrationManager : MonoBehaviour
     /// <param name="personId"></param>
     public void Register(string personGroup, string personId)
     {
+        m_PhotosToRegister.Clear();
         m_StatusManager.ShowStatus("Press button to register photo");
         m_CaptureManager.OnCapture += CaptureFaces;
         m_PersonId = personId;
@@ -50,16 +50,18 @@ public class RegistrationManager : MonoBehaviour
     /// </summary>
     void CaptureFaces(Texture2D snapshot)
     {
-        if (m_PhotosTaken == m_NumberOfRequiredFaces) return;
-        string personFolder = Application.dataPath + Constants.PREFIX_TRAIN_IMAGES_PATH + Constants.PREFIX_TRAIN_IMAGE_NAME + m_PersonId;
-        if (!Directory.Exists(personFolder))
+        Debug.Log("CaptureFaces");
+        m_StatusManager.ShowStatus("CaptureFaces");
+
+        if (m_PhotosTaken == m_NumberOfRequiredFaces)
         {
-            Folders.Create(personFolder);
+            Debug.Log("CaptureFaces, PhotosTaken : " + m_PhotosTaken + " and requiredFaces : " + m_NumberOfRequiredFaces);
+            return;
         }
-        File.WriteAllBytes(personFolder + "/" + m_PersonId + "_" + m_PhotosTaken.ToString() + ".jpg", snapshot.EncodeToJPG());
+        m_PhotosToRegister.Add(snapshot);
         Debug.Log("Capture button pressed during registration");
         m_PhotosTaken++;
-        m_StatusManager.ShowStatus("Capturing : " + m_PhotosTaken + " of 3");
+        m_StatusManager.ShowStatus("Registering : " + m_PhotosTaken + " of 3");
 
         if(m_PhotosTaken == m_NumberOfRequiredFaces)
         {
@@ -78,7 +80,7 @@ public class RegistrationManager : MonoBehaviour
             Debug.LogError("No images to be added to Person");
             return;
         }
-        StartCoroutine(m_AzureFaceDetection.AddFaceToPersonInGroup(m_PersonGroup, m_PersonId, imageFiles));
+        StartCoroutine(m_AzureFaceDetection.AddFaceToPersonInGroup(m_PersonGroup, m_PersonId, m_PhotosToRegister));
     }
 
     void Train()
@@ -95,15 +97,5 @@ public class RegistrationManager : MonoBehaviour
         m_CaptureManager.OnCapture = null;
         m_DetectionManager.Init();
         StartCoroutine(m_AzureFaceDetection.Get(m_PersonGroup));
-    }
-
-    void ClearTrainFolder()
-    {
-        Debug.Log("checking train folder.. : "+ m_PersonFacesFolder);
-        if (Directory.Exists(m_PersonFacesFolder))
-        {
-            Debug.Log("deleting train folder");
-            Directory.Delete(m_PersonFacesFolder, true);
-        }
     }
 }

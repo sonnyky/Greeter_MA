@@ -21,6 +21,7 @@ public class CaptureManager : MonoBehaviour
 
     [SerializeField]
     RawImage m_DetectionScreenImage;
+    Quaternion baseRotation;
 
     WebcamManager m_WebcamManager;
     WebCamTexture m_WebcamTexture;
@@ -54,6 +55,7 @@ public class CaptureManager : MonoBehaviour
         string cameraName = m_WebcamManager.GetFrontCameraName();
         if (!cameraName.Equals("default"))
         {
+            baseRotation = transform.rotation;
             m_WebcamTexture = new WebCamTexture(cameraName);
             m_DetectionScreenImage.texture = m_WebcamTexture;
             m_DetectionScreenImage.material.mainTexture = m_WebcamTexture;
@@ -63,6 +65,13 @@ public class CaptureManager : MonoBehaviour
         {
             Debug.LogError("No front facing cameras found");
         }
+    }
+
+    private void Update()
+    {
+#if UNITY_ANDROID && !UNITY_EDITOR
+        m_DetectionScreenImage.transform.rotation = baseRotation * Quaternion.AngleAxis(m_WebcamTexture.videoRotationAngle, Vector3.forward) * Quaternion.AngleAxis(180f, Vector3.up);
+#endif
     }
 
     public void CapturePrep()
@@ -89,9 +98,6 @@ public class CaptureManager : MonoBehaviour
         snapshot.SetPixels32(m_WebcamTexture.GetPixels32());
 #endif
         snapshot.Apply();
-
-        m_DetectionScreenImage.texture = snapshot;
-        m_DetectionScreenImage.material.mainTexture = snapshot;
 
         m_StatusManager.ShowStatus(Constants.CAPTURING);
         if (OnCapture != null)
