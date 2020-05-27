@@ -61,7 +61,7 @@ public class RegistrationManager : MonoBehaviour
         m_PhotosToRegister.Add(snapshot);
         Debug.Log("Capture button pressed during registration");
         m_PhotosTaken++;
-        m_StatusManager.ShowStatus("Registering : " + m_PhotosTaken + " of 3");
+        m_StatusManager.ShowStatus("Registering : " + m_PhotosTaken + " of " + m_NumberOfRequiredFaces);
 
         if(m_PhotosTaken == m_NumberOfRequiredFaces)
         {
@@ -71,15 +71,6 @@ public class RegistrationManager : MonoBehaviour
 
     void RegisterFacesToAzure()
     {
-        string personFolder = Application.dataPath + Constants.PREFIX_TRAIN_IMAGES_PATH + Constants.PREFIX_TRAIN_IMAGE_NAME + m_PersonId;
-        string[] imageFiles = Directory.GetFiles(personFolder, "*.jpg");
-        int numOfRegisteredPhoto = 0;
-
-        if (imageFiles.Length == 0)
-        {
-            Debug.LogError("No images to be added to Person");
-            return;
-        }
         StartCoroutine(m_AzureFaceDetection.AddFaceToPersonInGroup(m_PersonGroup, m_PersonId, m_PhotosToRegister));
     }
 
