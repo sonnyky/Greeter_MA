@@ -11,6 +11,7 @@ public class DetectionManager : MonoBehaviour
     RegistrationManager m_RegistrationManager;
 
     WaitForSeconds m_TimeUntilCameraStops = new WaitForSeconds(5f);
+    WaitForSeconds m_TimeUntilCanCallAzureAgain = new WaitForSeconds(30f);
 
     string m_RuntimeImage="";
     Texture2D runtimeShot;
@@ -203,6 +204,10 @@ public class DetectionManager : MonoBehaviour
     IEnumerator StopCamera()
     {
         yield return m_TimeUntilCameraStops;
+        m_StatusManager.ShowStatus("Wait 30 seconds for next verification");
         m_CaptureManager.StopCamera();
+
+        yield return m_TimeUntilCanCallAzureAgain;
+        m_CaptureManager.ReenableButton();
     }
 }

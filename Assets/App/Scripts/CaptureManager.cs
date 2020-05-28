@@ -38,6 +38,8 @@ public class CaptureManager : MonoBehaviour
     GCHandle processedPixelHandle;
     IntPtr processedPixelPtr;
 
+    bool m_ButtonActive = true;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -76,10 +78,16 @@ public class CaptureManager : MonoBehaviour
 
     public void CapturePrep()
     {
+        if (!m_ButtonActive) return;
+        m_StatusManager.ShowStatus(Constants.CAPTURING);
+
         if (!m_WebcamTexture.isPlaying)
         {
             m_WebcamTexture.Play();
         }
+
+        m_ButtonActive = false;
+        m_CaptureButton.gameObject.SetActive(false);
         StartCoroutine(Capture());
     }
 
@@ -99,7 +107,6 @@ public class CaptureManager : MonoBehaviour
 #endif
         snapshot.Apply();
 
-        m_StatusManager.ShowStatus(Constants.CAPTURING);
         if (OnCapture != null)
         {
             OnCapture.Invoke(snapshot);
@@ -131,6 +138,12 @@ public class CaptureManager : MonoBehaviour
     public bool IsCameraActive()
     {
         return m_WebcamTexture.isPlaying;
+    }
+
+    public void ReenableButton()
+    {
+        m_ButtonActive = true;
+        m_CaptureButton.gameObject.SetActive(true);
     }
 
 }
