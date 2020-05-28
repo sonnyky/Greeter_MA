@@ -83,12 +83,13 @@ public class DetectionManager : MonoBehaviour
     void CheckAllPersonsHaveFaces(List<PersonInGroup.Person> list)
     {
         m_PersonsInGroup.Clear();
-        m_PersonsInGroup.AddRange(list);
         if (list.Count == 0)
         {
             Debug.Log("not all persons have faces");
             CreatePersonInGroup();
+            return;
         }
+        m_PersonsInGroup.AddRange(list);
 
         int personChecked = 0;
         for(int i=0; i<list.Count; i++)
@@ -97,7 +98,7 @@ public class DetectionManager : MonoBehaviour
             {
                 Debug.Log("deleting face : " + list[i].personId);
                 StartCoroutine(m_AzureFaceDetection.DeletePersonInGroup(m_PersonGroupId, list[i].personId));
-                break;
+                return;
             }
             else
             {
