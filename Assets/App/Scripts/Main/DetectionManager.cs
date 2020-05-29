@@ -59,8 +59,10 @@ public class DetectionManager : MonoBehaviour
 
     public void Init()
     {
+        Debug.Log("capture manager on capture set to Entry");
         m_CaptureManager.OnCapture += Entry;
         m_PersonsInGroup.Clear();
+        m_AzureFaceDetection.OnTrainingSuccess += DetermineFaceArea;
     }
 
     void Entry(Texture2D snapshot)
@@ -79,11 +81,13 @@ public class DetectionManager : MonoBehaviour
     void GetPersonListInGroup()
     {
         m_StatusManager.ShowStatus("Getting person list");
+        Debug.Log("Getting person list");
         StartCoroutine(m_AzureFaceDetection.GetPersonList(m_PersonGroupId));
     }
 
     void CheckAllPersonsHaveFaces(List<PersonInGroup.Person> list)
     {
+        Debug.Log("CheckAllPersonsHaveFaces : " + list.Count);
         m_PersonsInGroup.Clear();
         if (list.Count == 0)
         {
@@ -92,6 +96,9 @@ public class DetectionManager : MonoBehaviour
             return;
         }
         m_PersonsInGroup.AddRange(list);
+
+        Debug.Log("Got list of persons in group : " + list.Count);
+        Debug.Log("Member variable of persons in group : " + m_PersonsInGroup.Count);
 
         int personChecked = 0;
         for(int i=0; i<list.Count; i++)
@@ -122,6 +129,8 @@ public class DetectionManager : MonoBehaviour
     /// </summary>
     void CreatePersonInGroup()
     {
+        m_SoundManager.PlayClip(Constants.PERSON_UNKNOWN_CODE);
+        m_StatusManager.SetDetectionIcon(1);
         StartCoroutine(m_AzureFaceDetection.CreatePersonInGroup(m_PersonGroupId, System.DateTime.Now.ToString(), "Auto person"));
     }
 
@@ -178,9 +187,22 @@ public class DetectionManager : MonoBehaviour
                     index = i;
                 }
             }
+            Debug.Log("candidates length : " + identifiedFaces[0].candidates.Length);
+
+            if(identifiedFaces[0].candidates.Length == 0)
+            {
+                Debug.Log("First identified face doesn't contain a candidate");
+                m_StatusManager.ShowStatus(Constants.PERSON_UNKNOWN);
+                m_SoundManager.PlayClip(Constants.PERSON_UNKNOWN_CODE);
+                m_StatusManager.SetDetectionIcon(1);
+                CreatePersonInGroup();
+                return;
+            }
+
             string personIdToIdentify = identifiedFaces[0].candidates[index].personId;
 
             bool personKnown = false;
+            Debug.Log("How many persons in group ? " + m_PersonsInGroup.Count);
             for (int j=0; j<m_PersonsInGroup.Count; j++)
             {
                 if (personIdToIdentify.Equals(m_PersonsInGroup[j].personId))
@@ -199,17 +221,15 @@ public class DetectionManager : MonoBehaviour
             else
             {
                 m_StatusManager.ShowStatus(Constants.PERSON_UNKNOWN);
-                m_SoundManager.PlayClip(Constants.PERSON_UNKNOWN_CODE);
-                m_StatusManager.SetDetectionIcon(1);
                 CreatePersonInGroup();
             }
         }
     }
 
-    IEnumerator StopCamera()
+    IEnumerator StopCamera(string message = "Wait 30 seconds for next verification")
     {
         yield return m_TimeUntilCameraStops;
-        m_StatusManager.ShowStatus("Wait 30 seconds for next verification");
+        m_StatusManager.ShowStatus(message);
         m_CaptureManager.StopCamera();
 
         yield return m_TimeUntilCanCallAzureAgain;

@@ -28,6 +28,8 @@ public class RegistrationManager : MonoBehaviour
 
         m_PhotosToRegister = new List<Texture2D>();
         m_AzureFaceDetection.OnFacesAddedToPerson += Train;
+
+        m_AzureFaceDetection.OnTrainingSuccess = null;
         m_AzureFaceDetection.OnTrainingSuccess += DetectAgain;
     }
 
@@ -43,6 +45,10 @@ public class RegistrationManager : MonoBehaviour
         m_CaptureManager.ReenableButton();
         m_StatusManager.ShowStatus("Press button to register photo");
         m_CaptureManager.OnCapture += CaptureFaces;
+
+        m_AzureFaceDetection.OnTrainingSuccess = null;
+        m_AzureFaceDetection.OnTrainingSuccess += DetectAgain;
+
         m_PersonId = personId;
         m_PersonGroup = personGroup;
         m_PhotosTaken = 0;
@@ -91,8 +97,10 @@ public class RegistrationManager : MonoBehaviour
     /// </summary>
     void DetectAgain()
     {
-        m_StatusManager.ShowStatus("Training done. Recognizing...");
+        m_StatusManager.ShowStatus("Revalidating in 30 secs");
         m_CaptureManager.OnCapture = null;
+
+        m_AzureFaceDetection.OnTrainingSuccess = null;
         m_DetectionManager.Init();
         StartCoroutine(C_DetectAgain());
     }
