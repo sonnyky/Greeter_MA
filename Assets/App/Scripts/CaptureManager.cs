@@ -30,6 +30,8 @@ public class CaptureManager : MonoBehaviour
     public System.Action<Texture2D> OnCapture;
 
     WaitForSeconds m_WaitTimeAfterCameraStart = new WaitForSeconds(3f);
+    float m_TimeUntilAutoCameraStop = 5f;
+    float m_CameraInactivityTime = 0f;
 
     Color32[] inputPixelData;
     Color32[] processedPixelData;
@@ -74,21 +76,36 @@ public class CaptureManager : MonoBehaviour
 #if UNITY_ANDROID && !UNITY_EDITOR
         m_DetectionScreenImage.transform.rotation = baseRotation * Quaternion.AngleAxis(m_WebcamTexture.videoRotationAngle, Vector3.forward) * Quaternion.AngleAxis(180f, Vector3.up);
 #endif
+        // Stops camera after inactivity for 5 seconds to prevent crash on Android devices
+        // Android automatically stops camera after some inactivity causing Unity's WebcamTexture to return null
+        if (m_WebcamTexture.isPlaying)
+        {
+            m_CameraInactivityTime += Time.deltaTime;
+            if(m_CameraInactivityTime >= m_TimeUntilAutoCameraStop)
+            {
+                StopCamera();
+                m_CameraInactivityTime = 0f;
+            }
+        }
+
     }
 
     public void CapturePrep()
     {
         if (!m_ButtonActive) return;
-        m_StatusManager.ShowStatus(Constants.CAPTURING);
-
+        
         if (!m_WebcamTexture.isPlaying)
         {
             m_WebcamTexture.Play();
+            m_StatusManager.ShowStatus("Press again to capture");
         }
-
-        m_ButtonActive = false;
-        m_CaptureButton.gameObject.SetActive(false);
-        StartCoroutine(Capture());
+        else
+        {
+            m_StatusManager.ShowStatus(Constants.CAPTURING);
+            m_ButtonActive = false;
+            m_CaptureButton.gameObject.SetActive(false);
+            StartCoroutine(Capture());
+        }
     }
 
     IEnumerator Capture()
@@ -115,6 +132,7 @@ public class CaptureManager : MonoBehaviour
 
     public void StopCamera()
     {
+        m_StatusManager.ShowStatus("Press to start camera");
         m_WebcamTexture.Stop();
     }
 

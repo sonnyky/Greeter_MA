@@ -97,7 +97,7 @@ public class RegistrationManager : MonoBehaviour
     /// </summary>
     void DetectAgain()
     {
-        m_StatusManager.ShowStatus("Revalidating in 30 secs");
+        m_StatusManager.ShowStatus("Thank you. Revalidating in 30 secs");
         m_CaptureManager.OnCapture = null;
 
         m_AzureFaceDetection.OnTrainingSuccess = null;
