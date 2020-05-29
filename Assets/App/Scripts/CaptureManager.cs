@@ -21,13 +21,17 @@ public class CaptureManager : MonoBehaviour
 
     [SerializeField]
     RawImage m_DetectionScreenImage;
+    Quaternion baseRotation;
 
     WebcamManager m_WebcamManager;
     WebCamTexture m_WebcamTexture;
+    CvPlugin m_NativeCvPlugin;
 
     public System.Action<Texture2D> OnCapture;
 
     WaitForSeconds m_WaitTimeAfterCameraStart = new WaitForSeconds(3f);
+    float m_TimeUntilAutoCameraStop = 5f;
+    float m_CameraInactivityTime = 0f;
 
     Color32[] inputPixelData;
     Color32[] processedPixelData;
@@ -36,10 +40,13 @@ public class CaptureManager : MonoBehaviour
     GCHandle processedPixelHandle;
     IntPtr processedPixelPtr;
 
+    bool m_ButtonActive = true;
+
     // Start is called before the first frame update
     void Start()
     {
         m_WebcamManager = GetComponent<WebcamManager>();
+        m_NativeCvPlugin = GetComponent<CvPlugin>();
         InitializeCamera();
         m_CaptureButton.onClick.AddListener(() =>
         {
@@ -47,21 +54,12 @@ public class CaptureManager : MonoBehaviour
         });
     }
 
-    void InitTexturePointers()
-    {
-        inputPixelData = m_OriginalTexture.GetPixels32();
-        processedPixelData = m_ProcessedTexture.GetPixels32();
-        inputPixelHandle = GCHandle.Alloc(inputPixelData, GCHandleType.Pinned);
-        inputPixelPtr = inputPixelHandle.AddrOfPinnedObject();
-        processedPixelHandle = GCHandle.Alloc(processedPixelData, GCHandleType.Pinned);
-        processedPixelPtr = processedPixelHandle.AddrOfPinnedObject();
-    }
-
     void InitializeCamera()
     {
         string cameraName = m_WebcamManager.GetFrontCameraName();
         if (!cameraName.Equals("default"))
         {
+            baseRotation = transform.rotation;
             m_WebcamTexture = new WebCamTexture(cameraName);
             m_DetectionScreenImage.texture = m_WebcamTexture;
             m_DetectionScreenImage.material.mainTexture = m_WebcamTexture;
@@ -73,23 +71,59 @@ public class CaptureManager : MonoBehaviour
         }
     }
 
+    private void Update()
+    {
+#if UNITY_ANDROID && !UNITY_EDITOR
+        m_DetectionScreenImage.transform.rotation = baseRotation * Quaternion.AngleAxis(m_WebcamTexture.videoRotationAngle, Vector3.forward) * Quaternion.AngleAxis(180f, Vector3.up);
+#endif
+        // Stops camera after inactivity for 5 seconds to prevent crash on Android devices
+        // Android automatically stops camera after some inactivity causing Unity's WebcamTexture to return null
+        if (m_WebcamTexture.isPlaying)
+        {
+            m_CameraInactivityTime += Time.deltaTime;
+            if(m_CameraInactivityTime >= m_TimeUntilAutoCameraStop)
+            {
+                StopCamera();
+                m_CameraInactivityTime = 0f;
+            }
+        }
+
+    }
+
     public void CapturePrep()
     {
+        if (!m_ButtonActive) return;
+        
         if (!m_WebcamTexture.isPlaying)
         {
             m_WebcamTexture.Play();
+            m_StatusManager.ShowStatus("Press again to capture");
         }
-        StartCoroutine(Capture());
+        else
+        {
+            m_StatusManager.ShowStatus(Constants.CAPTURING);
+            m_ButtonActive = false;
+            m_CaptureButton.gameObject.SetActive(false);
+            StartCoroutine(Capture());
+        }
     }
 
     IEnumerator Capture()
     {
         yield return m_WaitTimeAfterCameraStart;
         Texture2D snapshot = new Texture2D(m_WebcamTexture.width, m_WebcamTexture.height);
+
+        // Android devices gives images rotated by 90 degrees. So we rotate it again to detect faces properly.
+#if UNITY_ANDROID && !UNITY_EDITOR
+        Color32[] data = m_WebcamTexture.GetPixels32();
+        m_NativeCvPlugin.Flip(ref data, m_WebcamTexture.width, m_WebcamTexture.height, 90);
+        snapshot.SetPixels32(data);
+#endif
+#if UNITY_EDITOR
         snapshot.SetPixels32(m_WebcamTexture.GetPixels32());
+#endif
         snapshot.Apply();
 
-        m_StatusManager.ShowStatus(Constants.CAPTURING);
         if (OnCapture != null)
         {
             OnCapture.Invoke(snapshot);
@@ -98,6 +132,7 @@ public class CaptureManager : MonoBehaviour
 
     public void StopCamera()
     {
+        m_StatusManager.ShowStatus("Press to start camera");
         m_WebcamTexture.Stop();
     }
 
@@ -121,6 +156,12 @@ public class CaptureManager : MonoBehaviour
     public bool IsCameraActive()
     {
         return m_WebcamTexture.isPlaying;
+    }
+
+    public void ReenableButton()
+    {
+        m_ButtonActive = true;
+        m_CaptureButton.gameObject.SetActive(true);
     }
 
 }

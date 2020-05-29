@@ -39,6 +39,7 @@ public static class Constants
     public static string NEED_TO_CAPTURE_FACES = "Press red button to capture faces";
     public static string REGISTERING = "Registering...";
     public static string RESTART_DETECTION_FLOW = "Please recapture";
+    public static string MULTIPLE_FACES_DETECTED = "Can only detect one at a time. Please try again in 30 secs";
     public static string CAPTURING = PREFIX + "Capturing";
     public static string PERSON_KNOWN = "Verified";
     public static int PERSON_KNOWN_CODE = 0;

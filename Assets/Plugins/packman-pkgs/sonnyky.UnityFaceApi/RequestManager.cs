@@ -301,19 +301,19 @@ public static class RequestManager
             }
             else
             {
-                //error(www.downloadHandler.text);
+                if(!string.IsNullOrEmpty(www.downloadHandler.text)) error(www.downloadHandler.text);
                 result(true);
             }
         }
 
     }
 
-    public static IEnumerator AddFaceToPersonInGroup(string endpoint, string apiKey, string personGroupId, string personId,string pathToImage, string targetFace,System.Action<bool> result, System.Action<string> persistedFaceID)
+    public static IEnumerator AddFaceToPersonInGroup(string endpoint, string apiKey, string personGroupId, string personId, Texture2D image, string targetFace,System.Action<bool> result, System.Action<string> persistedFaceID)
     {
         string request = endpoint + "/persongroups/" + personGroupId + "/persons/" + personId + "/persistedFaces" ;
         
         var www = new UnityWebRequest(request, "POST");
-        byte[] bodyRaw = File.ReadAllBytes(pathToImage);
+        byte[] bodyRaw = image.EncodeToJPG();
         www.uploadHandler = (UploadHandler)new UploadHandlerRaw(bodyRaw);
         www.downloadHandler = (DownloadHandler)new DownloadHandlerBuffer();
         www.SetRequestHeader("Content-Type", "application/octet-stream");
@@ -368,7 +368,7 @@ public static class RequestManager
             }
             else
             {
-                error(www.downloadHandler.text);
+                if (!string.IsNullOrEmpty(www.downloadHandler.text)) error(www.downloadHandler.text);
                 result(true);
             }
         }
@@ -432,7 +432,7 @@ public static class RequestManager
                 temp.AddRange(idFaces);
                 identified(true);
                 candidates(temp);
-                error(www.error);
+                if(!string.IsNullOrEmpty(www.error)) error(www.error);
             }
         }
     }
