@@ -9,6 +9,7 @@ public class DetectionManager : MonoBehaviour
     CaptureManager m_CaptureManager;
     AzureFaceDetection m_AzureFaceDetection;
     RegistrationManager m_RegistrationManager;
+    SoundManager m_SoundManager;
 
     WaitForSeconds m_TimeUntilCameraStops = new WaitForSeconds(5f);
     WaitForSeconds m_TimeUntilCanCallAzureAgain = new WaitForSeconds(30f);
@@ -29,6 +30,7 @@ public class DetectionManager : MonoBehaviour
         m_PersonsInGroup = new List<PersonInGroup.Person>();
         m_RuntimeImage = Application.dataPath + Constants.PREFIX_DETECTION_IMAGES_PATH + "main.jpg";
         m_StatusManager = FindObjectOfType<StatusManager>();
+        m_SoundManager = FindObjectOfType<SoundManager>();
         m_AzureFaceDetection = FindObjectOfType<AzureFaceDetection>();
         m_CaptureManager = FindObjectOfType<CaptureManager>();
         m_RegistrationManager = GetComponent<RegistrationManager>();
@@ -190,12 +192,14 @@ public class DetectionManager : MonoBehaviour
             if (personKnown)
             {
                 m_StatusManager.ShowStatus(Constants.PERSON_KNOWN);
+                m_SoundManager.PlayClip(Constants.PERSON_KNOWN_CODE);
                 m_StatusManager.SetDetectionIcon(0);
                 StartCoroutine(StopCamera());
             }
             else
             {
                 m_StatusManager.ShowStatus(Constants.PERSON_UNKNOWN);
+                m_SoundManager.PlayClip(Constants.PERSON_UNKNOWN_CODE);
                 m_StatusManager.SetDetectionIcon(1);
                 CreatePersonInGroup();
             }
