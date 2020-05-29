@@ -165,6 +165,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_UiDisplay: {fileID: 4107139108503507843, guid: 0323375d2b29d594ea0ad0343f154f2e,
     type: 3}
+  m_SoundManager: {fileID: 1412329523836845954, guid: c6338dd86b949ca48ace301412dba2e2,
+    type: 3}
   m_AzureManager: {fileID: 4800515080358061694, guid: bdd84c317d5bef9458b13ab12dbfee60,
     type: 3}
   m_DoorManager: {fileID: 1487609646196419067, guid: ecc1bbde00b01dc4a9e56bbc66a337be,

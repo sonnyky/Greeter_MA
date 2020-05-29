@@ -11,6 +11,9 @@ public class BaseManager : MonoBehaviour
     GameObject m_UiDisplay;
 
     [SerializeField]
+    GameObject m_SoundManager;
+
+    [SerializeField]
     GameObject m_AzureManager;
 
     CaptureManager m_CaptureManager;
@@ -37,6 +40,10 @@ public class BaseManager : MonoBehaviour
 
     void InstantiateManagers()
     {
+        GameObject soundManager = Instantiate(m_SoundManager);
+        soundManager.name = "SoundManager";
+        soundManager.transform.SetParent(transform);
+
         GameObject azureMgr = Instantiate(m_AzureManager);
         azureMgr.name = "AzureManager";
         azureMgr.transform.SetParent(transform);

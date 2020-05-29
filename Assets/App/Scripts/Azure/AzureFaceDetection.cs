@@ -155,21 +155,21 @@ public class AzureFaceDetection : MonoBehaviour
         }
     }
 
-    public IEnumerator AddFaceToPersonInGroup(string personGroup, string personId, string[] imageFiles)
+    public IEnumerator AddFaceToPersonInGroup(string personGroup, string personId, List<Texture2D> imageTextures)
     {
 
         int facesAdded = 0;
-        for (int i = 0; i < imageFiles.Length; i++)
+        for (int i = 0; i < imageTextures.Count; i++)
         {
             bool added = false;
             string faceId = "";
-            yield return RequestManager.AddFaceToPersonInGroup(m_Endpoint, m_ApiKey, personGroup, personId, imageFiles[i], "", res => added = res, value => faceId = value);
+            yield return RequestManager.AddFaceToPersonInGroup(m_Endpoint, m_ApiKey, personGroup, personId, imageTextures[i], "", res => added = res, value => faceId = value);
             if (added)
             {
                 facesAdded++;
             }
         }
-        if(facesAdded == imageFiles.Length && OnFacesAddedToPerson != null)
+        if(facesAdded == imageTextures.Count && OnFacesAddedToPerson != null)
         {
             OnFacesAddedToPerson.Invoke();
         }
