@@ -41,8 +41,9 @@ public static class Constants
     public static string RESTART_DETECTION_FLOW = "Please recapture";
     public static string MULTIPLE_FACES_DETECTED = "Can only detect one at a time. Please try again in 30 secs";
     public static string CAPTURING = PREFIX + "Capturing";
-    public static string PERSON_KNOWN = "Verified";
+    public static string PERSON_KNOWN = "Verified. Notifying";
     public static int PERSON_KNOWN_CODE = 0;
     public static int PERSON_UNKNOWN_CODE = 1;
     public static string PERSON_UNKNOWN = "Unknown person";
+    public static string NEW_PERSON_REGISTERED = "New Registered. Notifying...";
 }

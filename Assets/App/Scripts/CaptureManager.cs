@@ -30,7 +30,7 @@ public class CaptureManager : MonoBehaviour
     public System.Action<Texture2D> OnCapture;
 
     WaitForSeconds m_WaitTimeAfterCameraStart = new WaitForSeconds(3f);
-    float m_TimeUntilAutoCameraStop = 5f;
+    float m_TimeUntilAutoCameraStop = 15f;
     float m_CameraInactivityTime = 0f;
 
     Color32[] inputPixelData;
@@ -93,7 +93,7 @@ public class CaptureManager : MonoBehaviour
     public void CapturePrep()
     {
         if (!m_ButtonActive) return;
-        
+        m_CameraInactivityTime = 0f;
         if (!m_WebcamTexture.isPlaying)
         {
             m_WebcamTexture.Play();
