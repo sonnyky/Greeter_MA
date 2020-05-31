@@ -10,6 +10,9 @@ public class StatusManager : MonoBehaviour
     TextMeshProUGUI m_StatusText;
 
     [SerializeField]
+    TextMeshProUGUI m_DebugText;
+
+    [SerializeField]
     Sprite[] m_DetectionStatusIconSprites;
 
     [SerializeField]
@@ -33,5 +36,10 @@ public class StatusManager : MonoBehaviour
     {
         yield return m_TimeUntilHideIcon;
         m_DetectionStatusIcon.gameObject.SetActive(false);
+    }
+
+    public void ShowDebugStatus(string status)
+    {
+        m_DebugText.text = status;
     }
 }

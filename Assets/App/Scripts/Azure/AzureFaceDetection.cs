@@ -43,6 +43,7 @@ public class AzureFaceDetection : MonoBehaviour
     public System.Action OnFacesNotFound;
     public System.Action<List<IdentifiedFaces.IdentifiedFacesResponse>> OnFaceIdentified;
     public System.Action OnFaceNotIdentified;
+    public System.Action OnPersonGroupDeleted;
 
     private void Start()
     {
@@ -140,6 +141,18 @@ public class AzureFaceDetection : MonoBehaviour
         if (trainPersonGroupResult && OnTrainingSuccess != null)
         {
             OnTrainingSuccess.Invoke();
+        }
+    }
+
+    public IEnumerator DeletePersonGroup(string personGroup)
+    {
+        bool successfulDelete = false;
+        string deleteError = "";
+        yield return RequestManager.DeletePersonGroup(m_Endpoint, m_ApiKey, personGroup, res => successfulDelete = res, err => deleteError = err);
+        Debug.Log("DeletePersonGroup result : " + successfulDelete);
+        if (successfulDelete && OnPersonGroupDeleted != null)
+        {
+            OnPersonGroupDeleted.Invoke();
         }
     }
 

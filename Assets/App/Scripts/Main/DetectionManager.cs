@@ -42,6 +42,9 @@ public class DetectionManager : MonoBehaviour
         // When capture button is pressed, start detection process
         m_CaptureManager.OnCapture += Entry;
 
+        // When debug button is pressed, delete all Person Groups
+        m_CaptureManager.OnDebug += DebugReset;
+
         // Subscribe to the Azure face detection component
         m_AzureFaceDetection.OnPersonGroupNotExisted += CreatePersonGroup;
         m_AzureFaceDetection.OnPersonGroupExists += GetPersonListInGroup;
@@ -57,6 +60,9 @@ public class DetectionManager : MonoBehaviour
         m_AzureFaceDetection.OnFacesFound += Identify;
         m_AzureFaceDetection.OnFaceNotIdentified += CreatePersonInGroup;
         m_AzureFaceDetection.OnFaceIdentified += CheckIdentifiedFaceIsKnown;
+
+        // Debug
+        m_AzureFaceDetection.OnPersonGroupDeleted += DebugSuccessful;
     }
 
     public void Init()
@@ -266,5 +272,23 @@ public class DetectionManager : MonoBehaviour
             Debug.Log("response : " + www.downloadHandler.text);
             m_StatusManager.ShowStatus("Notification sent. Wait 30 secs before next verification");
         }
+    }
+
+    void DebugReset()
+    {
+        StartCoroutine(m_AzureFaceDetection.DeletePersonGroup(m_PersonGroupId));
+    }
+
+    void DebugSuccessful()
+    {
+        Debug.Log("Debug Successful");
+        m_StatusManager.ShowDebugStatus("Persons Reset");
+        StartCoroutine("RestoreDebugText");
+    }
+
+    IEnumerator RestoreDebugText()
+    {
+        yield return new WaitForSeconds(3f);
+        m_StatusManager.ShowDebugStatus("Press to delete all data");
     }
 }
