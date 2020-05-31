@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
+using UnityEngine.Networking;
 
 public class DetectionManager : MonoBehaviour
 {
@@ -16,6 +17,7 @@ public class DetectionManager : MonoBehaviour
 
     string m_RuntimeImage="";
     Texture2D runtimeShot;
+    bool m_NewRegistered = false;
 
     string m_PersonGroupId = "default";
     float m_Timeout = 10f; // Wait 10 seconds before declaring network problems
@@ -40,6 +42,9 @@ public class DetectionManager : MonoBehaviour
         // When capture button is pressed, start detection process
         m_CaptureManager.OnCapture += Entry;
 
+        // When debug button is pressed, delete all Person Groups
+        m_CaptureManager.OnDebug += DebugReset;
+
         // Subscribe to the Azure face detection component
         m_AzureFaceDetection.OnPersonGroupNotExisted += CreatePersonGroup;
         m_AzureFaceDetection.OnPersonGroupExists += GetPersonListInGroup;
@@ -55,6 +60,9 @@ public class DetectionManager : MonoBehaviour
         m_AzureFaceDetection.OnFacesFound += Identify;
         m_AzureFaceDetection.OnFaceNotIdentified += CreatePersonInGroup;
         m_AzureFaceDetection.OnFaceIdentified += CheckIdentifiedFaceIsKnown;
+
+        // Debug
+        m_AzureFaceDetection.OnPersonGroupDeleted += DebugSuccessful;
     }
 
     public void Init()
@@ -68,6 +76,7 @@ public class DetectionManager : MonoBehaviour
     void Entry(Texture2D snapshot)
     {
         m_PersonsInGroup.Clear();
+        m_NewRegistered = false;
         m_StatusManager.ShowStatus("Attempting to recognize face");
         runtimeShot = snapshot;
         StartCoroutine(m_AzureFaceDetection.Get(m_PersonGroupId));
@@ -129,6 +138,7 @@ public class DetectionManager : MonoBehaviour
     /// </summary>
     void CreatePersonInGroup()
     {
+        m_NewRegistered = true;
         m_SoundManager.PlayClip(Constants.PERSON_UNKNOWN_CODE);
         m_StatusManager.SetDetectionIcon(1);
         StartCoroutine(m_AzureFaceDetection.CreatePersonInGroup(m_PersonGroupId, System.DateTime.Now.ToString(), "Auto person"));
@@ -213,7 +223,17 @@ public class DetectionManager : MonoBehaviour
 
             if (personKnown)
             {
-                m_StatusManager.ShowStatus(Constants.PERSON_KNOWN);
+                switch (m_NewRegistered)
+                {
+                    case true:
+                        m_StatusManager.ShowStatus(Constants.NEW_PERSON_REGISTERED);
+                        StartCoroutine(ReportFaceVerificationResult("New Person Registered"));
+                        break;
+                    case false:
+                        m_StatusManager.ShowStatus(Constants.PERSON_KNOWN);
+                        StartCoroutine(ReportFaceVerificationResult("Registered Person"));
+                        break;
+                }
                 m_SoundManager.PlayClip(Constants.PERSON_KNOWN_CODE);
                 m_StatusManager.SetDetectionIcon(0);
                 StartCoroutine(StopCamera());
@@ -226,13 +246,49 @@ public class DetectionManager : MonoBehaviour
         }
     }
 
-    IEnumerator StopCamera(string message = "Wait 30 seconds for next verification")
+    IEnumerator StopCamera()
     {
         yield return m_TimeUntilCameraStops;
-        m_StatusManager.ShowStatus(message);
         m_CaptureManager.StopCamera();
 
         yield return m_TimeUntilCanCallAzureAgain;
         m_CaptureManager.ReenableButton();
+    }
+
+    IEnumerator ReportFaceVerificationResult(string result)
+    {
+        string request = "https://fathomless-oasis-34994.herokuapp.com/api/azure_face/identification/identified/" + result;
+        var www = new UnityWebRequest(request, "POST");
+        www.downloadHandler = (DownloadHandler)new DownloadHandlerBuffer();
+
+        yield return www.SendWebRequest();
+
+        if (www.isNetworkError)
+        {
+            m_StatusManager.ShowStatus("Network error. Wait 30 secs and try again");
+        }
+        else
+        {
+            Debug.Log("response : " + www.downloadHandler.text);
+            m_StatusManager.ShowStatus("Notification sent. Wait 30 secs before next verification");
+        }
+    }
+
+    void DebugReset()
+    {
+        StartCoroutine(m_AzureFaceDetection.DeletePersonGroup(m_PersonGroupId));
+    }
+
+    void DebugSuccessful()
+    {
+        Debug.Log("Debug Successful");
+        m_StatusManager.ShowDebugStatus("Persons Reset");
+        StartCoroutine("RestoreDebugText");
+    }
+
+    IEnumerator RestoreDebugText()
+    {
+        yield return new WaitForSeconds(3f);
+        m_StatusManager.ShowDebugStatus("Press to delete all data");
     }
 }

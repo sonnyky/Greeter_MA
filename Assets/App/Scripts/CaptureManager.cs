@@ -20,17 +20,24 @@ public class CaptureManager : MonoBehaviour
     Button m_CaptureButton;
 
     [SerializeField]
+    Button m_DebugButton;
+
+    [SerializeField]
     RawImage m_DetectionScreenImage;
     Quaternion baseRotation;
+
+    [SerializeField]
+    Sprite m_DetectionScreenPlaceholder;
 
     WebcamManager m_WebcamManager;
     WebCamTexture m_WebcamTexture;
     CvPlugin m_NativeCvPlugin;
 
     public System.Action<Texture2D> OnCapture;
+    public System.Action OnDebug;
 
     WaitForSeconds m_WaitTimeAfterCameraStart = new WaitForSeconds(3f);
-    float m_TimeUntilAutoCameraStop = 5f;
+    float m_TimeUntilAutoCameraStop = 15f;
     float m_CameraInactivityTime = 0f;
 
     Color32[] inputPixelData;
@@ -51,6 +58,11 @@ public class CaptureManager : MonoBehaviour
         m_CaptureButton.onClick.AddListener(() =>
         {
             CapturePrep();
+        });
+
+        m_DebugButton.onClick.AddListener(() =>
+        {
+            ResetAllDebug();
         });
     }
 
@@ -90,12 +102,22 @@ public class CaptureManager : MonoBehaviour
 
     }
 
+    public void ResetAllDebug()
+    {
+        if(OnDebug != null)
+        {
+            OnDebug.Invoke();
+        }
+    }
+
     public void CapturePrep()
     {
         if (!m_ButtonActive) return;
-        
+        m_CameraInactivityTime = 0f;
         if (!m_WebcamTexture.isPlaying)
         {
+            m_DetectionScreenImage.texture = m_WebcamTexture;
+            m_DetectionScreenImage.material.mainTexture = m_WebcamTexture;
             m_WebcamTexture.Play();
             m_StatusManager.ShowStatus("Press again to capture");
         }
@@ -116,7 +138,12 @@ public class CaptureManager : MonoBehaviour
         // Android devices gives images rotated by 90 degrees. So we rotate it again to detect faces properly.
 #if UNITY_ANDROID && !UNITY_EDITOR
         Color32[] data = m_WebcamTexture.GetPixels32();
-        m_NativeCvPlugin.Flip(ref data, m_WebcamTexture.width, m_WebcamTexture.height, 90);
+        Debug.Log("[GreeterMA] capture rotation : " + m_WebcamTexture.videoRotationAngle);
+        int angle = m_WebcamTexture.videoRotationAngle;
+        if(m_WebcamTexture.videoRotationAngle > 180){
+            angle = 360 - m_WebcamTexture.videoRotationAngle;
+        }
+        m_NativeCvPlugin.Flip(ref data, m_WebcamTexture.width, m_WebcamTexture.height, angle);
         snapshot.SetPixels32(data);
 #endif
 #if UNITY_EDITOR
@@ -132,8 +159,8 @@ public class CaptureManager : MonoBehaviour
 
     public void StopCamera()
     {
-        m_StatusManager.ShowStatus("Press to start camera");
         m_WebcamTexture.Stop();
+        m_DetectionScreenImage.texture = m_DetectionScreenPlaceholder.texture;
     }
 
     private void OnApplicationQuit()
@@ -150,6 +177,8 @@ public class CaptureManager : MonoBehaviour
 
     public void StartCapture()
     {
+        m_DetectionScreenImage.texture = m_WebcamTexture;
+        m_DetectionScreenImage.material.mainTexture = m_WebcamTexture;
         m_WebcamTexture.Play();
     }
 
